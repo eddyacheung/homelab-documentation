@@ -209,3 +209,40 @@ Quit without saving:
 ## Commands I Learned While Building My Homelab
 
 (Add commands here as I discover them.)
+# Windows Package Management (Winget)
+
+## Check Winget Version
+winget --version
+
+## Search Packages
+winget search <package>
+
+## Install Package
+winget install <package>
+
+## Upgrade All Software
+winget upgrade --all
+
+## Export Installed Software
+winget export -o packages.json
+
+## Import Installed Software
+winget import -i packages.json
+
+# Search for software
+winget search vscode
+
+# Install software
+winget install Microsoft.VisualStudioCode
+
+# Upgrade all installed software
+winget upgrade --all
+
+# List installed packages
+winget list
+
+# Export installed applications
+winget export -o packages.json
+
+# Import applications on another machine
+winget import -i packages.json
