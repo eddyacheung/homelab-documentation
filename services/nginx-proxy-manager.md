@@ -1,4 +1,4 @@
-[200~# Nginx Proxy Manager
+# Nginx Proxy Manager
 
 ## Purpose
 
