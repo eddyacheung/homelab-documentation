@@ -51,6 +51,19 @@ Portainer was originally created with a direct `docker run` command, so it appea
 
 It was converted to Docker Compose while preserving the existing Portainer configuration and data.
 
+## Portainer Stack Ownership
+
+Portainer detects the `portainer` Compose project as a stack, but displays the following notice:
+
+> This stack was created outside of Portainer. Control over this stack is limited.
+
+This is expected because Portainer was deployed with Docker Compose from the NAS terminal rather than through the Portainer stack editor.
+
+The authoritative deployment file remains:
+
+```text
+/volume1/docker/portainer/compose.yml
+
 ### Existing configuration discovered
 
 ```bash
