@@ -80,6 +80,16 @@ This allows NPM to communicate directly with application containers.
 
 ## Proxy Host Configuration
 
+### Portainer
+
+| Setting | Value |
+|---|---|
+| Domain | portainer.home |
+| Forward Hostname/IP | portainer |
+| Forward Port | 9000 |
+| Scheme | http |
+| Docker Network | portainer bridge network |
+
 ### Seerr
 
 | Setting             | Value      |
@@ -121,6 +131,16 @@ This allows NPM to communicate directly with application containers.
 | Forward Port        | 8888        |
 
 ## Troubleshooting
+
+### Wrong Forward Port
+
+A proxy host can be online while the backend still fails if the Forward Port does not match the application’s internal container port.
+
+For Portainer:
+
+- NPM external HTTP listener: `8081`
+- Portainer internal HTTP port: `9000`
+- These are different ports with different jobs.
 
 ### 502 Bad Gateway
 

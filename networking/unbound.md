@@ -33,3 +33,9 @@ From the Pi-hole container:
 
 dig @unbound cloudflare.com
 dig @127.0.0.1 google.com
+
+
+## Availability Considerations
+Pi-hole and Unbound run on the NAS. If the NAS is unavailable, clients using Pi-hole as their only DNS server cannot resolve domain names even if the internet connection is otherwise available.
+
+A future improvement is a second Pi-hole + Unbound instance on independent hardware for DNS redundancy.

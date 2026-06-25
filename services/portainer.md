@@ -16,6 +16,8 @@ Portainer provides a web interface for managing Docker containers, networks, vol
 
 ## Access
 
+added media-network to container
+
 | Service                | Address              |
 | ---------------------- | -------------------- |
 | Portainer web UI       | `http://NAS-IP:9000` |
