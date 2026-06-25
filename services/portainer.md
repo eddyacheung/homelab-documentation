@@ -16,7 +16,10 @@ Portainer provides a web interface for managing Docker containers, networks, vol
 
 ## Access
 
-added media-network to container
+Portainer joined media-net so Nginx Proxy Manager can reach it by Docker DNS name.
+NPM upstream: http://portainer:9000
+Portainer data is bind-mounted from /volume1/docker/portainer/data.
+Recovery lesson: the legacy portainer.db had originally lived one directory higher and had to be copied into the bind-mounted /data directory.
 
 | Service                | Address              |
 | ---------------------- | -------------------- |
