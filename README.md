@@ -1,42 +1,71 @@
 # Homelab Documentation
 
-Documentation for my Linux, Docker, networking, and infrastructure learning projects.
+Documentation for my homelab, Linux administration, Docker infrastructure, networking, and self-hosted services.
 
 ## Hardware
 
-- UGREEN DXP4800 Plus
-- Intel N100
-- 64GB RAM
-- RTX 4070 Desktop
+- UGREEN DXP4800 Plus (64 GB RAM)
+- Windows desktop with NVIDIA RTX 4070
 - Raspberry Pi 4
+
+## Repository Structure
+
+```text
+services/         Individual service documentation
+networking/       DNS, Docker networking, UniFi, Tailscale
+linux/            Linux administration notes and references
+windows/          Windows administration and PowerShell references
+docker/           Docker concepts and platform documentation
+standards/        Change management and operational standards
+troubleshooting/  Recovery guides and troubleshooting notes
+```
 
 ## Core Services
 
 - Portainer
+- Watchtower
 - Open WebUI
-- Ollama
 - Plex
 - Sonarr
 - Radarr
 - Prowlarr
 - qBittorrent
 - Seerr
-- Tailscale
+- Pi-hole
+- Unbound
+- Nginx Proxy Manager
+- Uptime Kuma
+- Homarr
 
-## Networking
+## Current Infrastructure
 
-- UniFi UCG Max
-- UniFi U7 Pro Max
-- VLAN Segmentation
-- Pi-hole (planned)
-- Unbound (planned)
+- Docker Compose
+- Portainer stack management
+- Pi-hole + Unbound recursive DNS
+- Nginx Proxy Manager reverse proxy
+- UniFi networking
+- Tailscale remote access
 
 ## Current Learning Goals
 
 - Linux Administration
-- Git and Documentation
-- Nginx Proxy Manager
-- CI/CD with GitLab
-- Terraform
-- AWS
-- Kubernetes
+- Docker and Docker Compose
+- Git and GitHub
+- Python
+- Ansible
+- Canonical MAAS
+- Cloudflare Tunnel
+- SearXNG
+- Retrieval-Augmented Generation (RAG)
+
+## Documentation Philosophy
+
+Every significant infrastructure change should include:
+
+1. Backup and rollback planning
+2. Implementation
+3. Validation
+4. Documentation
+5. Git commit
+
+The goal is to keep this repository synchronized with the actual state of the homelab so it serves as both documentation and an operational knowledge base.
