@@ -1,104 +1,131 @@
 # Open WebUI
 
-## Overview
+## Purpose
 
-Open WebUI is a self-hosted web interface for interacting with Large Language Models (LLMs). It provides a ChatGPT-like experience while allowing models to run locally or connect to remote AI providers.
+Open WebUI provides a self-hosted web interface for interacting with large language models.
 
-In this homelab, Open WebUI serves as a central platform for experimenting with AI workloads, testing local language models, and evaluating self-hosted alternatives to commercial AI services.
+In this homelab, it is used as the primary local AI web interface and connects to Ollama running on the Windows desktop.
 
-## Key Features
+## Deployment
 
-* ChatGPT-style web interface
-* Multi-user support
-* Conversation history and organization
-* File upload and document analysis
-* Integration with Ollama
-* Integration with OpenAI-compatible APIs
-* Model management and selection
-* Role-based access controls
+- **Host:** UGREEN DXP4800 Plus
+- **Container name:** `open-webui`
+- **Image:** `ghcr.io/open-webui/open-webui:main`
+- **Deployment method:** Docker Compose via Portainer
+- **Docker network:** `ai-net`
+- **Published port:** `3002:8080`
+- **Persistent data path:** `/volume1/docker/open-webui`
 
-## Use Cases
+## Access
 
-### Local AI
+Open WebUI is reachable locally at:
 
-Run local models through Ollama without sending prompts to external services.
+```text
+http://192.168.10.101:3002
+```
 
-Examples:
-
-* General knowledge questions
-* Linux troubleshooting
-* Documentation assistance
-* Script generation
-* Homelab planning
-
-### Remote AI Providers
-
-Connect Open WebUI to external providers when larger or more capable models are required.
-
-Benefits:
-
-* Access to advanced reasoning models
-* Unified interface for multiple providers
-* Centralized chat history
+A future friendly hostname may be configured through Pi-hole and Nginx Proxy Manager.
 
 ## Architecture
 
 ```text
 User Browser
-      |
-      v
-+----------------+
-|  Open WebUI    |
-+----------------+
-      |
-      +------------+
-      |            |
-      v            v
-   Ollama     External APIs
-(Local LLMs)   (Cloud Models)
+  ↓
+Open WebUI container on NAS
+  ↓
+Ollama on Windows desktop
+  ↓
+Local LLM models
 ```
 
-## Deployment Notes
+Ollama endpoint:
 
-Containerized using Docker.
-
-Key considerations:
-
-* Persistent storage for configuration and chat history
-* Reverse proxy integration for secure remote access
-* HTTPS recommended when exposed externally
-* Regular image updates for security and feature improvements
-
-## Benefits to Homelab Learning
-
-Open WebUI provides hands-on experience with:
-
-* Containerized AI applications
-* Reverse proxy configuration
-* GPU acceleration concepts
-* API integrations
-* Self-hosted services
-* AI workflow experimentation
-
-## Maintenance
-
-### Update Container
-
-```bash
-docker compose pull
-docker compose up -d
+```text
+http://192.168.10.100:11434
 ```
 
-### Review Logs
+Configured in Compose as:
 
-```bash
-docker logs open-webui
+```yaml
+environment:
+  - OLLAMA_BASE_URL=http://192.168.10.100:11434
 ```
 
-### Verify Container Status
+## Compose Notes
+
+Current important configuration:
+
+```yaml
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    environment:
+      - OLLAMA_BASE_URL=http://192.168.10.100:11434
+    volumes:
+      - /volume1/docker/open-webui:/app/backend/data
+    ports:
+      - 3002:8080
+    restart: unless-stopped
+    networks:
+      - ai-net
+```
+
+## Watchtower
+
+Open WebUI is opted into Watchtower automatic updates.
+
+Label:
+
+```yaml
+labels:
+  - com.centurylinklabs.watchtower.enable=true
+```
+
+This means Watchtower may update Open WebUI during the weekly maintenance window.
+
+## Current Local Models
+
+Ollama on the Windows desktop has been used with models such as:
+
+- DeepSeek-R1 14B
+- Gemma 2 9B
+- Llama 3.1 8B
+- Qwen 2.5 7B
+- Qwen 2.5 Coder 7B
+
+Models are stored and executed on the desktop, not inside the Open WebUI container.
+
+## Verification Commands
+
+Check container status:
 
 ```bash
-docker ps
+docker ps --filter name=open-webui
+```
+
+Check logs:
+
+```bash
+docker logs open-webui --tail 50
+```
+
+Verify Watchtower label:
+
+```bash
+docker inspect open-webui --format '{{json .Config.Labels}}'
+```
+
+Expected label:
+
+```text
+"com.centurylinklabs.watchtower.enable":"true"
+```
+
+Test Ollama from another machine:
+
+```powershell
+curl.exe http://192.168.10.100:11434/api/tags
 ```
 
 ## Troubleshooting
@@ -107,19 +134,29 @@ docker ps
 
 Verify:
 
-* Ollama container is running
-* Containers share a network
-* Correct Ollama URL is configured
+- Ollama is running on the Windows desktop.
+- The desktop IP address is still `192.168.10.100`.
+- Ollama is listening on `0.0.0.0`, not only localhost.
+- Windows firewall allows traffic to port `11434`.
+- Open WebUI still has `OLLAMA_BASE_URL=http://192.168.10.100:11434` configured.
 
 ### Web Interface Unavailable
 
 Verify:
 
-* Container is running
-* Published ports are correct
-* Reverse proxy configuration is functioning
-* DNS records resolve correctly
+- The `open-webui` container is running.
+- Port `3002` is published on the NAS.
+- The container is attached to `ai-net`.
+- Browser access works at `http://192.168.10.101:3002`.
 
-```
-```
+## Future Plans
 
+- Add a friendly local DNS hostname such as `openwebui.home`.
+- Add Nginx Proxy Manager reverse proxy support.
+- Integrate SearXNG for web search.
+- Add a RAG/document-library workflow.
+- Document model selection and hardware limits.
+
+## Notes
+
+Open WebUI is part of the AI lab stack. It should remain separate from the media stack and continue using the `ai-net` Docker network.
