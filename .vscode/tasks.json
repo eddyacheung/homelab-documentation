@@ -1,0 +1,29 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Git: Status",
+            "type": "shell",
+            "command": "git status -s",
+            "problemMatcher": []
+        },
+        {
+            "label": "Git: Pull Rebase",
+            "type": "shell",
+            "command": "git pull --rebase",
+            "problemMatcher": []
+        },
+        {
+            "label": "Git: Recent Log",
+            "type": "shell",
+            "command": "git log --oneline --graph --decorate -10",
+            "problemMatcher": []
+        },
+        {
+            "label": "SSH: UGREEN NAS",
+            "type": "shell",
+            "command": "ssh ugreen",
+            "problemMatcher": []
+        }
+    ]
+}
