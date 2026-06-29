@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "yzhang.markdown-all-in-one",
+        "eamodio.gitlens",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker",
+        "pkief.material-icon-theme",
+        "usernamehw.errorlens"
+    ]
+}
