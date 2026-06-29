@@ -72,11 +72,16 @@ The following containers should remain manually updated:
 - Nginx Proxy Manager
 - Plex
 - qBittorrent
+- Sonarr
+- Radarr
+- Prowlarr
 - Seerr
 - PostgreSQL
 - Homebridge
 
-These services are infrastructure, networking, database-backed, or higher-risk services where release notes should be reviewed before updating.
+These services are infrastructure, networking, database-backed, downloader, proxy, or core media services where release notes should be reviewed before updating.
+
+qBittorrent should remain excluded at least until the future Gluetun + NordVPN project is completed and a clear rollback plan exists.
 
 ## Key Configuration
 
@@ -121,6 +126,16 @@ Expected label:
 
 ```text
 "com.centurylinklabs.watchtower.enable":"true"
+```
+
+Confirm intentionally excluded services do not have the opt-in label:
+
+```bash
+docker inspect plex --format '{{json .Config.Labels}}'
+docker inspect sonarr --format '{{json .Config.Labels}}'
+docker inspect radarr --format '{{json .Config.Labels}}'
+docker inspect prowlarr --format '{{json .Config.Labels}}'
+docker inspect qbittorrent --format '{{json .Config.Labels}}'
 ```
 
 View recent logs:
