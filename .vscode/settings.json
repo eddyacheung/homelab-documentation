@@ -1,0 +1,12 @@
+{
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "editor.wordWrap": "on",
+    "editor.minimap.enabled": false,
+    "editor.stickyScroll.enabled": true,
+    "editor.renderWhitespace": "selection",
+    "git.autofetch": true,
+    "markdown.preview.breaks": true,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true
+}
