@@ -1,0 +1,21 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# Local environment files
+.env
+.env.*
+
+# VS Code local/user-only files
+.vscode/*.code-snippets
+
+# Keep shared VS Code workspace files tracked
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
