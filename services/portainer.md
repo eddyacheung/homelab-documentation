@@ -59,6 +59,39 @@ Key paths:
 /volume1/docker/portainer/tls/
 ```
 
+## Managed Stacks
+
+### Gluetun + qBittorrent
+
+Portainer stack path:
+
+```text
+/volume1/docker/portainer/compose/38/docker-compose.yml
+```
+
+Services in this stack:
+
+- `gluetun`
+- `qbittorrent`
+
+Purpose:
+
+- Gluetun provides the NordVPN OpenVPN gateway.
+- qBittorrent shares Gluetun's network namespace.
+- qBittorrent WebUI and torrent ports are published through Gluetun.
+
+Important Compose pattern:
+
+```yaml
+qbittorrent:
+  network_mode: "service:gluetun"
+```
+
+Important operational note:
+
+- Do not split Gluetun and qBittorrent into separate Portainer stacks unless intentionally changing the network design.
+- Keeping them in the same stack makes lifecycle management and dependency ordering simpler.
+
 ## Conversion to Docker Compose
 
 Portainer was converted from a standalone Docker container to a Docker Compose managed deployment.
@@ -145,6 +178,12 @@ Check Portainer health:
 docker ps --filter name=portainer
 ```
 
+Check Gluetun + qBittorrent stack status:
+
+```bash
+docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "gluetun|qbittorrent"
+```
+
 ## Recovery / Rollback
 
 Before making major Portainer changes, back up the full Portainer directory:
@@ -176,3 +215,4 @@ docker run -d \
 - A container can be healthy while Portainer management features are partially broken.
 - Validate Portainer migrations by checking both service availability and Stack Editor functionality.
 - Back up Portainer before changing mounts, compose files, or deployment methods.
+- Portainer stack compose files may be stored under `/volume1/docker/portainer/compose/<stack-id>/docker-compose.yml`, even when Docker labels show `/data/compose/<stack-id>` from inside the container.
