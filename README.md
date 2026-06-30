@@ -43,8 +43,18 @@ troubleshooting/  Recovery guides and troubleshooting notes
 - Portainer stack management
 - Pi-hole + Unbound recursive DNS
 - Nginx Proxy Manager reverse proxy
+- Cloudflare Tunnel and Zero Trust access
 - UniFi networking
 - Tailscale remote access
+
+## Networking Documentation
+
+- Docker networking
+- Pi-hole
+- UniFi Network
+- Tailscale
+- Nginx Proxy Manager
+- Cloudflare Zero Trust
 
 ## Current Learning Goals
 
