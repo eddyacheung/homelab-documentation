@@ -130,6 +130,46 @@ This allows NPM to communicate directly with application containers.
 | Forward Hostname/IP | qbittorrent |
 | Forward Port        | 8888        |
 
+## Cloudflare Tunnel Integration
+
+Nginx Proxy Manager remains the internal reverse proxy for selected public services published through Cloudflare Tunnel.
+
+External traffic flow:
+
+```text
+Cloudflare
+    |
+    v
+Cloudflare Tunnel
+    |
+    v
+http://nginx-proxy-manager:80
+    |
+    v
+NPM Proxy Host
+    |
+    v
+Internal Docker Service
+```
+
+Example for Seerr:
+
+| Layer | Value |
+|---|---|
+| Public URL | `https://seerr.armouredcore.net` |
+| Cloudflare tunnel destination | `http://nginx-proxy-manager:80` |
+| NPM proxy host | `seerr.armouredcore.net` |
+| NPM forward host | `seerr` |
+| NPM forward port | `5055` |
+
+Cloudflare handles public HTTPS and Google authentication. NPM routes the request to the correct backend container.
+
+Current approach:
+
+- Keep `.home` hostnames for LAN-only access.
+- Use `*.armouredcore.net` hostnames for selected Cloudflare-protected services.
+- Protect public applications with Cloudflare Access before exposing the application login page.
+
 ## Troubleshooting
 
 ### Wrong Forward Port
@@ -189,6 +229,16 @@ Proxy hosts must reference the actual Docker container name.
 | Prowlarr    | prowlarr       |
 | qBittorrent | qbittorrent    |
 
+### Cloudflare Tunnel 502 or Blank Page
+
+If a Cloudflare-protected hostname fails but the `.home` hostname works:
+
+1. Confirm the Cloudflare Tunnel is Healthy.
+2. Confirm the published application route points to `nginx-proxy-manager:80`.
+3. Confirm `cloudflared` and NPM share the same Docker network.
+4. Confirm the NPM public proxy host uses the public hostname, such as `seerr.armouredcore.net`.
+5. Confirm the NPM proxy host points to the correct internal container and port.
+
 ## Lessons Learned
 
 * NPM must be attached to `media-net` to communicate with backend containers.
@@ -196,13 +246,13 @@ Proxy hosts must reference the actual Docker container name.
 * Direct access to a service does not guarantee NPM can reach it.
 * NPM logs are the fastest way to diagnose 502 Bad Gateway errors.
 * Pi-hole local DNS and Docker networking should be validated separately when troubleshooting.
+* Cloudflare Access should protect public application hostnames before traffic reaches NPM.
 
 ## Future Plans
 
 * Move NPM from testing ports (8081/8181/4443) to standard ports (80/81/443)
 * Enable HTTPS for internal services
-* Integrate Cloudflare DNS
-* Configure SSL certificates
+* Continue integrating selected services with Cloudflare Tunnel
+* Configure SSL certificates for internal-only services if needed
 * Evaluate wildcard certificates
 * Publish selected services externally through Cloudflare Tunnel
-
