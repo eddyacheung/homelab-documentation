@@ -121,6 +121,64 @@ http://192.168.10.101:8888
 
 ---
 
+## Prowlarr Download Client
+
+Because qBittorrent shares Gluetun's network namespace, qBittorrent does not appear as its own reachable Docker hostname from Prowlarr.
+
+Prowlarr should connect to qBittorrent through the Gluetun container:
+
+```text
+Host: gluetun
+Port: 8888
+Use SSL: unchecked
+```
+
+Do not use this setting in Prowlarr:
+
+```text
+Host: qbittorrent
+Port: 8888
+```
+
+That hostname will fail because qBittorrent is not attached to `media-net` as a separate network endpoint when it is running with:
+
+```yaml
+network_mode: "service:gluetun"
+```
+
+Useful checks:
+
+```bash
+docker inspect qbittorrent --format '{{.HostConfig.NetworkMode}}'
+```
+
+Expected result:
+
+```text
+container:<gluetun-container-id>
+```
+
+Confirm the shared network owner:
+
+```bash
+docker ps --filter id=<gluetun-container-id> --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+```
+
+Expected result should show:
+
+```text
+gluetun   qmcgaw/gluetun:latest   Up ... (healthy)
+```
+
+Validation from Prowlarr:
+
+1. Set the qBittorrent download client host to `gluetun`.
+2. Keep the port set to `8888`.
+3. Click **Test** in Prowlarr.
+4. Confirm a release can be sent from Prowlarr and appears in qBittorrent.
+
+---
+
 ## Validation
 
 Check container status:
@@ -278,3 +336,4 @@ docker compose up -d
 - The WebUI can work inside the shared namespace while still being blocked from the LAN by Gluetun's firewall.
 - OpenVPN credentials must use Gluetun's expected variable names: `OPENVPN_USER` and `OPENVPN_PASSWORD`.
 - The kill switch should be tested directly after deployment, not assumed.
+- Prowlarr must use `gluetun:8888` as the qBittorrent download client endpoint when qBittorrent shares Gluetun's network namespace.
