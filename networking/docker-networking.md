@@ -4,7 +4,7 @@
 
 This document tracks the important Docker networks used by the homelab, why each network exists, and how containers should communicate with each other.
 
-The goal is to avoid mystery networks, accidental service isolation, and future troubleshooting chaos when services are moved between Docker Compose, Portainer stacks, host networking, bridge networking, or macvlan.
+The goal is to avoid mystery networks, accidental service isolation, and future troubleshooting chaos when services are moved between Docker Compose, Portainer stacks, host networking, bridge networking, macvlan, or VPN gateway patterns.
 
 ---
 
@@ -15,6 +15,7 @@ The homelab uses a small number of intentional Docker network patterns:
 | Network Type | Used For | Notes |
 |--------------|----------|-------|
 | Custom bridge | Most application containers | Preferred for normal container-to-container communication |
+| Shared network namespace | qBittorrent behind Gluetun | Used to force qBittorrent through the VPN gateway |
 | Host network | Plex | Used when LAN discovery and media client compatibility matter |
 | Macvlan | Pi-hole | Gives Pi-hole its own LAN IP |
 | Default bridge | Temporary or legacy containers | Avoid for long-term service deployment when possible |
@@ -32,24 +33,36 @@ Services that belong on `media-net` include:
 - Sonarr
 - Radarr
 - Prowlarr
-- qBittorrent
 - Seerr / Overseerr
 - Nginx Proxy Manager
 - Portainer, when it needs to reach media services by container name
+- Gluetun, as the VPN gateway for qBittorrent
+
+qBittorrent does not attach directly to `media-net` anymore. It shares Gluetun's network namespace using:
+
+```yaml
+network_mode: "service:gluetun"
+```
 
 Why this matters:
 
-- Containers can reach each other by container name.
+- Containers can reach each other by container name when they share `media-net`.
 - Nginx Proxy Manager can proxy to backend services without using NAS LAN IPs.
 - The media stack stays grouped on one predictable network.
+- qBittorrent is forced through Gluetun instead of using a normal bridge network path.
 
 Example:
 
 ```text
 http://sonarr:8989
 http://radarr:7878
-http://qbittorrent:8080
 http://seerr:5055
+```
+
+For qBittorrent, access the WebUI through Gluetun's published port:
+
+```text
+http://NAS-IP:8888
 ```
 
 ---
@@ -89,6 +102,59 @@ Plex should remain on host networking because it improves compatibility with:
 - Plex apps on the LAN
 
 Plex is one of the few services where host networking is preferred over a custom bridge.
+
+---
+
+## Gluetun and qBittorrent VPN Gateway
+
+qBittorrent now routes through Gluetun instead of using an application-level SOCKS5 proxy.
+
+Stack pattern:
+
+```text
+qBittorrent
+    |
+    v
+Gluetun
+    |
+    v
+NordVPN OpenVPN tunnel
+    |
+    v
+Internet
+```
+
+Compose pattern:
+
+```yaml
+services:
+  gluetun:
+    networks:
+      - media-net
+    ports:
+      - "8888:8888"
+      - "6888:6888"
+      - "6888:6888/udp"
+
+  qbittorrent:
+    network_mode: "service:gluetun"
+```
+
+Important behavior:
+
+- qBittorrent shares Gluetun's network namespace.
+- qBittorrent does not publish its own ports directly.
+- qBittorrent WebUI is exposed through Gluetun on port `8888`.
+- Torrent ports are exposed through Gluetun on `6888/tcp` and `6888/udp`.
+- If Gluetun stops, qBittorrent loses internet access.
+
+Gluetun firewall must allow inbound ports required by qBittorrent:
+
+```text
+FIREWALL_INPUT_PORTS=8888,6888
+```
+
+Without this setting, the qBittorrent WebUI can be reachable from inside the shared namespace but blocked or reset from the NAS / LAN.
 
 ---
 
@@ -169,6 +235,27 @@ Only unused networks were removed. Active networks such as `media-net`, `ai-net`
 - The service is part of the media stack.
 - Nginx Proxy Manager needs to proxy to it.
 - Other media containers need to reach it by container name.
+- The service is a gateway container, such as Gluetun, that must expose ports for a protected app.
+
+### Use `network_mode: service:<container>` when
+
+- One container must share another container's network namespace.
+- A protected app should be forced through a VPN gateway container.
+- Kill switch behavior is desired.
+
+Current example:
+
+```yaml
+network_mode: "service:gluetun"
+```
+
+Used by:
+
+```text
+qBittorrent -> Gluetun
+```
+
+Do not use this pattern casually. It means the protected container no longer has its own independent Docker network identity or port mappings.
 
 ### Use `ai-net` when
 
@@ -229,6 +316,38 @@ Test container-to-host Plex communication:
 docker exec sonarr curl --connect-timeout 5 http://172.26.0.1:32400/identity
 ```
 
+Check Gluetun and qBittorrent status:
+
+```bash
+docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "gluetun|qbittorrent"
+```
+
+Check qBittorrent public IP from inside the protected namespace:
+
+```bash
+docker exec qbittorrent curl -s https://ipinfo.io/ip
+```
+
+Test qBittorrent WebUI through Gluetun:
+
+```bash
+curl -I http://127.0.0.1:8888
+```
+
+Test kill switch behavior:
+
+```bash
+docker stop gluetun
+docker exec qbittorrent curl -m 10 -s https://ipinfo.io/ip || echo "No internet from qbittorrent"
+```
+
+Restart after kill switch test:
+
+```bash
+cd /volume1/docker/portainer/compose/38
+docker compose up -d
+```
+
 ---
 
 ## Documentation Rules
@@ -236,10 +355,11 @@ docker exec sonarr curl --connect-timeout 5 http://172.26.0.1:32400/identity
 When adding or moving containers:
 
 1. Document which Docker network the service uses.
-2. Document whether the service is reached by container name, NAS LAN IP, macvlan IP, or Docker bridge gateway.
+2. Document whether the service is reached by container name, NAS LAN IP, macvlan IP, Docker bridge gateway, or shared network namespace.
 3. If Nginx Proxy Manager proxies to the service, make sure NPM is on the same Docker network as the backend container.
-4. Avoid creating one-off default Compose networks unless the service truly does not need to communicate with anything else.
-5. Before pruning networks, verify container counts and preserve anything active.
+4. If a container is protected by a VPN gateway, document the gateway container and kill switch behavior.
+5. Avoid creating one-off default Compose networks unless the service truly does not need to communicate with anything else.
+6. Before pruning networks, verify container counts and preserve anything active.
 
 ---
 
@@ -248,6 +368,8 @@ When adding or moving containers:
 - Plex should stay on host networking for media client compatibility.
 - Sonarr and Radarr should reach Plex through `172.26.0.1:32400` from `media-net`.
 - Nginx Proxy Manager needs to share a Docker network with the services it proxies.
+- qBittorrent should route through Gluetun using `network_mode: service:gluetun` instead of an application-level SOCKS5 proxy.
+- Gluetun must expose qBittorrent WebUI and torrent ports when qBittorrent shares its network namespace.
 - Empty Docker networks can accumulate after Compose changes and stack migrations.
 - Network cleanup should be audited before pruning.
 - Documenting network intent prevents future mystery spaghetti.
