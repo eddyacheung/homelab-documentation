@@ -168,16 +168,30 @@ network_mode: host
 
 Because Plex is not attached to `media-net`, containers such as Sonarr and Radarr should not try to reach Plex by the container name `plex`.
 
+On the UGREEN NAS, containers attached to the `media-net` bridge network should also avoid using the NAS LAN IP when they need to reach host-networked services. The NAS host itself can reach Plex through the LAN IP, but containers on `media-net` may time out when trying to hairpin back to the NAS LAN address.
+
+Example that worked from the NAS host:
+
+```bash
+curl --connect-timeout 5 http://192.168.10.101:32400/identity
+```
+
+Example that timed out from inside Radarr:
+
+```bash
+docker exec radarr curl --connect-timeout 5 http://192.168.10.101:32400/identity
+```
+
 Instead, containers on `media-net` should reach Plex through the Docker bridge gateway:
 
 ```text
 http://172.26.0.1:32400
 ```
 
-This was verified from inside the Sonarr container:
+This was verified from inside Radarr:
 
 ```bash
-docker exec sonarr curl --connect-timeout 5 http://172.26.0.1:32400/identity
+docker exec radarr curl --connect-timeout 5 http://172.26.0.1:32400/identity
 ```
 
 Expected result:
@@ -186,7 +200,16 @@ Expected result:
 Plex XML identity response
 ```
 
-The NAS LAN IP was avoided for this internal container-to-host path because the Docker bridge gateway provided the reliable route from `media-net` containers to host-networked Plex.
+Use this value for Plex Connect integrations in Radarr and Sonarr:
+
+```text
+Host: 172.26.0.1
+Port: 32400
+Use SSL: unchecked
+URL Base: blank
+```
+
+The key lesson is that `172.26.0.1` is the Docker bridge gateway for `media-net`, which gives containers a reliable path back to host-networked Plex.
 
 ---
 
@@ -310,11 +333,20 @@ Test container-to-container communication:
 docker exec sonarr curl --connect-timeout 5 http://radarr:7878
 ```
 
-Test container-to-host Plex communication:
+Test host-to-Plex communication from the NAS:
+
+```bash
+curl --connect-timeout 5 http://192.168.10.101:32400/identity
+```
+
+Test container-to-host Plex communication through the Docker bridge gateway:
 
 ```bash
 docker exec sonarr curl --connect-timeout 5 http://172.26.0.1:32400/identity
+docker exec radarr curl --connect-timeout 5 http://172.26.0.1:32400/identity
 ```
+
+If the NAS host can reach `192.168.10.101:32400` but a container times out to that same address, use `172.26.0.1:32400` for the container-side Plex integration.
 
 Check Gluetun and qBittorrent status:
 
@@ -367,6 +399,7 @@ When adding or moving containers:
 
 - Plex should stay on host networking for media client compatibility.
 - Sonarr and Radarr should reach Plex through `172.26.0.1:32400` from `media-net`.
+- On the UGREEN NAS, containers on `media-net` may time out when using the NAS LAN IP to reach host-networked Plex; use the Docker bridge gateway instead.
 - Nginx Proxy Manager needs to share a Docker network with the services it proxies.
 - qBittorrent should route through Gluetun using `network_mode: service:gluetun` instead of an application-level SOCKS5 proxy.
 - Gluetun must expose qBittorrent WebUI and torrent ports when qBittorrent shares its network namespace.
