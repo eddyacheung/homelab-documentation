@@ -34,6 +34,8 @@ troubleshooting/  Recovery guides and troubleshooting notes
 - Pi-hole
 - Unbound
 - Nginx Proxy Manager
+- Cloudflare Tunnel
+- Recyclarr (In Progress)
 - Uptime Kuma
 - Homarr
 
@@ -46,6 +48,29 @@ troubleshooting/  Recovery guides and troubleshooting notes
 - Cloudflare Tunnel and Zero Trust access
 - UniFi networking
 - Tailscale remote access
+
+## Active Projects
+
+### Recyclarr
+
+Status: **In Progress**
+
+Session 1 complete:
+
+- Deployed Recyclarr as a dedicated Portainer Stack.
+- Attached Recyclarr to `media-net`.
+- Initialized the Recyclarr config directory.
+- Fixed config volume permissions.
+- Confirmed official resource providers initialize successfully.
+- No Sonarr or Radarr profile changes were applied.
+
+Remaining:
+
+- Configure official Recyclarr v8 templates.
+- Connect Recyclarr to Sonarr and Radarr.
+- Run `sync --preview`.
+- Review proposed changes before applying.
+- Validate and document final profile behavior.
 
 ## Networking Documentation
 
