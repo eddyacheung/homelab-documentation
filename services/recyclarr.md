@@ -20,15 +20,24 @@ Session 1 completed:
 - Confirmed Recyclarr can initialize the official resource providers for TRaSH Guides and config templates.
 - No Sonarr or Radarr changes were applied.
 
-Session 2 planned:
+Session 2 completed:
 
-- Identify the correct Recyclarr v8 template workflow and template IDs.
+- Confirmed the Recyclarr v8 CLI does not support the older `--raw` flag for template listing.
+- Confirmed `recyclarr config create -t TEMPLATE_NAME` initializes the official providers but does not create a usable config when `TEMPLATE_NAME` is only a placeholder.
+- Confirmed the local template workflow needs the actual template identifier before a real config can be generated.
+- Stopped before applying any templates or syncing changes into Sonarr or Radarr.
+- No Sonarr or Radarr changes were applied.
+
+Session 3 planned:
+
+- Identify the correct Recyclarr v8 template IDs from the supported template list.
+- Generate a real Sonarr and/or Radarr template config using the actual template ID.
 - Configure Sonarr and Radarr connectivity.
 - Add API keys safely.
 - Run `sync --preview` only.
 - Review proposed changes before applying anything.
 
-Session 3 planned:
+Session 4 planned:
 
 - Apply approved configuration.
 - Validate profiles in Sonarr and Radarr.
@@ -156,6 +165,50 @@ docker exec recyclarr ls -la /config /config/configs
 docker exec recyclarr cat /config/configs/recyclarr.yml
 ```
 
+## Session 2 Commands and Findings
+
+Template creation was tested with a placeholder name:
+
+```bash
+docker exec recyclarr recyclarr config create -t TEMPLATE_NAME
+```
+
+Observed output:
+
+```text
+[INF] Initializing provider: official (type: trash-guides)
+[INF] Initializing provider: official (type: config-templates)
+```
+
+Finding:
+
+- `TEMPLATE_NAME` was only a placeholder, not an actual template ID.
+- The command initialized the official providers but did not produce the expected usable template-based configuration.
+- A valid Recyclarr v8 template ID is still needed before generating a real service config.
+
+Attempted to list templates with a raw output flag:
+
+```bash
+docker exec recyclarr recyclarr config list templates --raw
+```
+
+Observed result:
+
+```text
+Error: Unknown option 'raw'.
+```
+
+Finding:
+
+- Recyclarr v8 does not support `--raw` for `config list templates`.
+- Template discovery needs to use the supported default output from:
+
+```bash
+docker exec recyclarr recyclarr config list templates
+```
+
+No `sync`, `sync --preview`, or real profile changes were run during this session.
+
 ## Issue Encountered: Config Folder Permissions
 
 The first config creation attempt failed with a permission error:
@@ -190,6 +243,13 @@ Important observations from Session 1:
 - `recyclarr config list templates` confirmed templates are available.
 - More research is needed before applying templates because older examples may not match v8 behavior.
 
+Important observations from Session 2:
+
+- `recyclarr config create -t TEMPLATE_NAME` should not be used literally because `TEMPLATE_NAME` is only a placeholder.
+- `recyclarr config list templates --raw` is invalid in Recyclarr v8.
+- The next safe step is to list the available templates using the supported command, choose the correct template ID, and then create a config from that exact ID.
+- No Sonarr or Radarr profile changes have been made yet.
+
 ## Validation Completed
 
 Container running:
@@ -213,9 +273,9 @@ Initializing provider: official (type: config-templates)
 
 ## Backup and Rollback Plan
 
-No Sonarr or Radarr profile changes were applied in Session 1.
+No Sonarr or Radarr profile changes were applied in Session 1 or Session 2.
 
-Rollback for Session 1:
+Rollback for current Recyclarr-only work:
 
 1. Stop and remove the Recyclarr stack in Portainer.
 2. Optionally remove the config directory:
@@ -231,11 +291,23 @@ Future rollback before applying templates:
 - Export or document current Sonarr and Radarr quality profiles.
 - Save a copy of the Recyclarr config before each major change.
 - Use `sync --preview` before any real sync.
+- Do not run a real `sync` until the preview output has been reviewed.
 
 ## Next Session Checklist
 
-- Review the current Recyclarr v8 template workflow.
-- Select the appropriate starting templates for the media library.
+- Run the supported template list command:
+
+```bash
+docker exec recyclarr recyclarr config list templates
+```
+
+- Identify the correct template ID for the intended Sonarr and Radarr setup.
+- Generate a config using the actual template ID, not the placeholder:
+
+```bash
+docker exec recyclarr recyclarr config create -t <actual-template-id>
+```
+
 - Configure Sonarr API connection.
 - Configure Radarr API connection.
 - Run preview only:
