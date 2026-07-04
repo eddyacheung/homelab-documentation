@@ -38,6 +38,42 @@ Unbound
 Recursive DNS resolution
 ```
 
+## Docker Networking
+
+Pi-hole uses a Docker macvlan address so it can live on the LAN as its own DNS server:
+
+```text
+Pi-hole LAN IP: 192.168.10.250
+```
+
+The Pi-hole container is also attached to the Docker bridge used by homelab services:
+
+```text
+media-net IP: 172.26.0.14
+```
+
+Important macvlan behavior:
+
+- LAN clients can reach `192.168.10.250` normally.
+- The UGREEN NAS host cannot directly reach its own macvlan container by default.
+- UGOS `dnsmasq` forwards host DNS to Pi-hole.
+- Without a host-side macvlan shim, host DNS queries to Pi-hole time out.
+
+The persistent host shim is:
+
+```text
+Interface: pihole-shim
+Shim IP:   192.168.10.249/32
+Route:     192.168.10.250/32 dev pihole-shim
+Service:   pihole-shim.service
+```
+
+Detailed investigation and fix:
+
+```text
+troubleshooting/ugos-host-dnsmasq-forwarding.md
+```
+
 ## Verification Commands
 
 Verify Pi-hole container health:
@@ -70,6 +106,32 @@ Verify Unbound can resolve directly:
 docker exec unbound drill @127.0.0.1 cloudflare.com
 ```
 
+Verify LAN clients can reach Pi-hole:
+
+```powershell
+ping 192.168.10.250
+nslookup google.com 192.168.10.250
+```
+
+Verify the UGOS host can reach Pi-hole through the macvlan shim:
+
+```bash
+ip addr show pihole-shim
+ip route | grep 192.168.10.250
+ping -c 4 192.168.10.250
+dig google.com @127.0.0.1
+```
+
+Expected result:
+
+```text
+pihole-shim@eth0
+192.168.10.250 dev pihole-shim scope link
+0% packet loss
+SERVER: 127.0.0.1#53
+status: NOERROR
+```
+
 ## Pi-hole + Unbound Audit
 
 Audit completed on 2026-06-28.
@@ -82,6 +144,19 @@ Confirmed:
 - Pi-hole resolves external domains successfully.
 - Unbound resolves external domains directly.
 - No configuration changes were required during the audit.
+
+## UGOS Host DNS Forwarding Fix
+
+Fix completed on 2026-07-04.
+
+Confirmed:
+
+- UGOS uses `/usr/ugreen/etc/dnsmasq/dnsmasq.conf` for host DNS forwarding.
+- UGOS `dnsmasq` forwards to Pi-hole at `192.168.10.250`.
+- The NAS host could not reach `192.168.10.250` because Pi-hole uses Docker macvlan.
+- `ip neigh` showed `192.168.10.250 dev eth0 INCOMPLETE` before the fix.
+- Creating `pihole-shim` restored host-to-Pi-hole connectivity.
+- `dig google.com @127.0.0.1` now succeeds from the UGOS host.
 
 ## Overwatch Fails to Launch Behind Pi-hole
 
