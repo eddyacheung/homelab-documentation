@@ -6,9 +6,13 @@ Recyclarr is used to manage and synchronize Sonarr and Radarr quality profiles, 
 
 This project is being implemented in short sessions to avoid risky, late-night profile changes.
 
+Last updated: **2026-07-04**
+
 ## Current Status
 
 Status: **In Progress**
+
+Important safety note: Recyclarr has been deployed and tested, but no real `sync` has been run yet. Sonarr and Radarr profiles have not been changed by Recyclarr.
 
 Session 1 completed:
 
@@ -22,7 +26,8 @@ Session 1 completed:
 
 Session 2 completed:
 
-- Confirmed the Recyclarr v8 CLI does not support the older `--raw` flag for template listing.
+- Reviewed Recyclarr v8 CLI behavior while attempting to move from deployment into template-based configuration.
+- Confirmed the Recyclarr v8 CLI does not support the older/example `--raw` flag for template listing.
 - Confirmed `recyclarr config create -t TEMPLATE_NAME` initializes the official providers but does not create a usable config when `TEMPLATE_NAME` is only a placeholder.
 - Confirmed the local template workflow needs the actual template identifier before a real config can be generated.
 - Stopped before applying any templates or syncing changes into Sonarr or Radarr.
@@ -30,8 +35,9 @@ Session 2 completed:
 
 Session 3 planned:
 
-- Identify the correct Recyclarr v8 template IDs from the supported template list.
-- Generate a real Sonarr and/or Radarr template config using the actual template ID.
+- Run the supported template list command and capture the actual available template IDs.
+- Identify the correct Recyclarr v8 template IDs for the intended Sonarr and Radarr setup.
+- Generate a real Sonarr and/or Radarr template config using an actual template ID.
 - Configure Sonarr and Radarr connectivity.
 - Add API keys safely.
 - Run `sync --preview` only.
@@ -207,6 +213,17 @@ Finding:
 docker exec recyclarr recyclarr config list templates
 ```
 
+Help text was also checked during template discovery:
+
+```bash
+docker exec recyclarr recyclarr config list templates --help
+```
+
+Finding:
+
+- The help output did not provide a usable raw/listing shortcut for template IDs.
+- The next session should capture the normal template list output exactly as displayed, then use a real listed template identifier.
+
 No `sync`, `sync --preview`, or real profile changes were run during this session.
 
 ## Issue Encountered: Config Folder Permissions
@@ -293,6 +310,15 @@ Future rollback before applying templates:
 - Use `sync --preview` before any real sync.
 - Do not run a real `sync` until the preview output has been reviewed.
 
+## Review Checkpoint
+
+Before continuing Recyclarr implementation, review this documentation and confirm:
+
+- The current status still matches the NAS.
+- The stack path and mounted config path are correct.
+- Recyclarr is still only staged and has not modified Sonarr or Radarr.
+- The next session will use `sync --preview` before any real sync.
+
 ## Next Session Checklist
 
 - Run the supported template list command:
@@ -301,6 +327,7 @@ Future rollback before applying templates:
 docker exec recyclarr recyclarr config list templates
 ```
 
+- Capture the full template list output in the session notes.
 - Identify the correct template ID for the intended Sonarr and Radarr setup.
 - Generate a config using the actual template ID, not the placeholder:
 
