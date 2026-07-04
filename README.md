@@ -64,10 +64,20 @@ Session 1 complete:
 - Confirmed official resource providers initialize successfully.
 - No Sonarr or Radarr profile changes were applied.
 
+Session 2 complete:
+
+- Confirmed the older/example Recyclarr commands do not map cleanly to the current v8 CLI.
+- Confirmed `recyclarr config create -t TEMPLATE_NAME` only used a placeholder value and did not generate a usable service config.
+- Confirmed `recyclarr config list templates --raw` is invalid in Recyclarr v8.
+- Documented that the next safe step is to list supported templates, select a real template ID, and run preview only.
+- No Sonarr or Radarr profile changes were applied.
+
 Remaining:
 
+- Identify the correct Recyclarr v8 template IDs.
 - Configure official Recyclarr v8 templates.
 - Connect Recyclarr to Sonarr and Radarr.
+- Add API keys safely.
 - Run `sync --preview`.
 - Review proposed changes before applying.
 - Validate and document final profile behavior.
