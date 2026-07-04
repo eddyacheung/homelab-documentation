@@ -88,6 +88,66 @@ Pi-hole uses macvlan so it can have its own LAN IP address and function cleanly 
 
 This is intentional and should not be merged into `media-net`.
 
+Important behavior:
+
+- LAN clients can reach Pi-hole at `192.168.10.250`.
+- The Docker host cannot directly reach its own macvlan container by default.
+- The UGREEN NAS host requires the `pihole-shim` macvlan interface to reach Pi-hole from the host.
+- Without the shim, UGOS `dnsmasq` forwarding to Pi-hole times out.
+
+Related troubleshooting page:
+
+```text
+troubleshooting/ugos-host-dnsmasq-forwarding.md
+```
+
+---
+
+## Host Access to macvlan Containers
+
+Docker macvlan intentionally isolates the Docker host from containers attached to the macvlan network.
+
+For Pi-hole, this means:
+
+```text
+LAN clients -> 192.168.10.250: works
+UGOS host  -> 192.168.10.250: fails without shim
+```
+
+The host-side shim uses:
+
+```text
+Interface: pihole-shim
+Shim IP:   192.168.10.249/32
+Route:     192.168.10.250/32 dev pihole-shim
+Parent:    eth0
+```
+
+The persistent service is:
+
+```text
+pihole-shim.service
+```
+
+Verification commands:
+
+```bash
+ip addr show pihole-shim
+ip route | grep 192.168.10.250
+ping -c 4 192.168.10.250
+dig google.com @127.0.0.1
+```
+
+Expected results:
+
+```text
+pihole-shim@eth0
+192.168.10.250 dev pihole-shim scope link
+0% packet loss
+SERVER: 127.0.0.1#53
+status: NOERROR
+```
+
 ---
 
 ### `host`
@@ -299,6 +359,8 @@ Do not casually use host networking for normal services. It reduces isolation an
 
 Pi-hole is the current example.
 
+When the Docker host itself must reach a macvlan container, create and document a host-side macvlan shim instead of assuming normal LAN routing will work.
+
 ---
 
 ## Verification Commands
@@ -392,6 +454,7 @@ When adding or moving containers:
 4. If a container is protected by a VPN gateway, document the gateway container and kill switch behavior.
 5. Avoid creating one-off default Compose networks unless the service truly does not need to communicate with anything else.
 6. Before pruning networks, verify container counts and preserve anything active.
+7. For macvlan containers, document whether the Docker host needs a shim interface to reach them.
 
 ---
 
@@ -405,4 +468,5 @@ When adding or moving containers:
 - Gluetun must expose qBittorrent WebUI and torrent ports when qBittorrent shares its network namespace.
 - Empty Docker networks can accumulate after Compose changes and stack migrations.
 - Network cleanup should be audited before pruning.
+- Docker macvlan isolates the host from macvlan containers; Pi-hole requires the `pihole-shim` interface for UGOS host DNS forwarding.
 - Documenting network intent prevents future mystery spaghetti.
