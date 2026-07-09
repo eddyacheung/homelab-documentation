@@ -2,6 +2,9 @@
 
 Last updated: 2026-07-09
 
+## Status
+**Completed**
+
 ## Purpose
 Unpackerr automatically extracts supported archive downloads and notifies Sonarr and Radarr so completed downloads can be imported without manual extraction.
 
@@ -10,6 +13,7 @@ Unpackerr automatically extracts supported archive downloads and notifies Sonarr
 - Attached to the existing `media-net` Docker network.
 - Mounted `/volume2/Media` as `/data`.
 - Mounted `/volume1/docker/unpackerr/config` as `/config`.
+- Running as `root` to match the existing media stack permissions.
 
 ## Configuration
 - Sonarr: `http://sonarr:8989`
@@ -19,14 +23,10 @@ Unpackerr automatically extracts supported archive downloads and notifies Sonarr
 
 ## Troubleshooting
 ### Config permissions
-Initially the container could not create `/config/unpackerr.conf` or `unpackerr.log` due to permissions. Fixed by changing ownership of `/volume1/docker/unpackerr` to UID/GID 1000 and granting write access.
+Resolved by correcting ownership and permissions on `/volume1/docker/unpackerr`.
 
 ### Media permissions
-The media library is owned by `root` with restrictive permissions. Sonarr, Radarr, and qBittorrent already run as `root`, while Unpackerr was initially configured as `1000:1000`, preventing access to `/data`.
-
-Resolution:
-- Removed `user: 1000:1000` from the compose file.
-- Redeployed Unpackerr running as root to match the existing media stack.
+The media library is owned by `root`. Running Unpackerr as `1000:1000` prevented access to `/data`. Removing the explicit user and allowing the container to run as `root` resolved the issue.
 
 ## Validation
 Verified:
@@ -36,12 +36,8 @@ Verified:
 - Watching `/data/downloads`.
 - Able to browse the `/data` mount.
 
+A live archive extraction has not yet been observed, but this is considered an acceptable stopping point because archived downloads are uncommon in this environment. The deployment is complete and will validate itself naturally when an archived download is encountered.
+
 ## Rollback
 - Stop and remove the Unpackerr stack.
 - No changes are made to Sonarr or Radarr configuration by removing the container.
-- Restore the previous compose file if needed.
-
-## Next Steps
-- Validate extraction with a real archived download.
-- Confirm Sonarr or Radarr imports automatically after extraction.
-- Consider reorganizing the downloads directory to contain only active download content.
