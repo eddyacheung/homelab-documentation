@@ -18,6 +18,7 @@ windows/          Windows administration and PowerShell references
 docker/           Docker concepts and platform documentation
 standards/        Change management and operational standards
 troubleshooting/  Recovery guides and troubleshooting notes
+changes/          Dated infrastructure change notes
 ```
 
 ## Core Services
@@ -30,6 +31,7 @@ troubleshooting/  Recovery guides and troubleshooting notes
 - Radarr
 - Prowlarr
 - qBittorrent
+- Gluetun
 - Seerr
 - Pi-hole
 - Unbound
@@ -48,6 +50,25 @@ troubleshooting/  Recovery guides and troubleshooting notes
 - Cloudflare Tunnel and Zero Trust access
 - UniFi networking
 - Tailscale remote access
+
+## Recent Infrastructure Work
+
+### Portainer Stack Cleanup - 2026-07-08
+
+Completed cleanup and standardization for several Docker stacks:
+
+- Migrated qBittorrent and Gluetun from legacy stack `38` to a Portainer-managed `qbittorrent` stack.
+- Reattached Gluetun to `media-net` and restored Radarr/Sonarr/Prowlarr access through `gluetun:8888`.
+- Converted Watchtower back to a Portainer-managed stack and fixed Docker API compatibility with `DOCKER_API_VERSION=1.40`.
+- Disabled Watchtower rolling restarts because they are incompatible with the qBittorrent/Gluetun dependency model.
+- Renamed the Plex stack/project from `plexnew` to `plex` while preserving the existing Plex container, config, and libraries.
+- Backed up Portainer before testing self-management cleanup, then left it running from the host-side Compose file because full self-management was not worth the added risk.
+
+Detailed notes:
+
+```text
+changes/2026-07-08-portainer-stack-cleanup.md
+```
 
 ## Active Projects
 
