@@ -45,7 +45,14 @@ Media Available to Users
 | Image | `ghcr.io/linuxserver/plex:latest` |
 | Network Mode | `host` |
 | Stack Manager | Portainer |
-| Stack Name | `plexnew` |
+| Stack Name | `plex` |
+| Config Volume | `/volume1/docker/plexhw:/config` |
+| Media Mount | `/volume2/Media:/media:ro` |
+| Transcode Mount | `/volume1/docker/plexhw/transcode:/transcode` |
+
+The Plex stack was renamed from `plexnew` to `plex` on 2026-07-08. The container name was already `plex`; only the Portainer stack / Compose project name needed cleanup.
+
+---
 
 ## Why Host Networking?
 
@@ -132,13 +139,13 @@ Although the LAN address is reachable from the NAS itself, containers on `media-
 Check that Plex is running:
 
 ```bash
-docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}" | grep -i plex
+docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Label \"com.docker.compose.project\"}}" | grep -i plex
 ```
 
 Expected result:
 
 ```text
-plex    ghcr.io/linuxserver/plex:latest    Up ... (healthy)
+plex    ghcr.io/linuxserver/plex:latest    Up ... (healthy)    plex
 ```
 
 Check Plex from the NAS host:
@@ -154,6 +161,36 @@ docker exec sonarr curl --connect-timeout 5 http://172.26.0.1:32400/identity
 ```
 
 Both commands should return Plex XML containing the server version and machine identifier.
+
+---
+
+## Stack Rename Notes
+
+### Previous State
+
+```text
+Container: plex
+Project:   plexnew
+Stack:     plexnew
+```
+
+### Current State
+
+```text
+Container: plex
+Project:   plex
+Stack:     plex
+```
+
+The cleanup was performed by:
+
+1. Backing up the existing Compose file and Docker inspect output.
+2. Copying the Portainer stack Compose definition.
+3. Deleting the old `plexnew` stack.
+4. Recreating the stack as `plex` in Portainer.
+5. Verifying the Plex container returned healthy and retained its existing configuration.
+
+Because the existing `/config` bind mount was reused, Plex libraries and settings were preserved.
 
 ---
 
@@ -180,20 +217,13 @@ Current important networks include:
 
 ---
 
-## Container Rename Notes
-
-The Plex container was renamed from `PlexHW` to `plex` for consistency with the rest of the homelab container naming convention.
-
-The Portainer stack definition was updated so the rename survives future stack redeployments.
-
----
-
 ## Lessons Learned
 
 - Host-networked services are best accessed from Docker containers through the Docker bridge gateway (`172.26.0.1`).
 - Event-driven Plex updates are preferred over scheduled periodic library scans.
-- Standardized lowercase container names make Docker commands and documentation easier to maintain.
+- Standardized lowercase container and stack names make Docker commands and documentation easier to maintain.
 - Plex should remain on `network_mode: host` for best compatibility with local discovery protocols and Plex clients.
+- Renaming a Portainer stack is safest as a backup, delete, recreate, and verify operation.
 
 ---
 
@@ -201,8 +231,9 @@ The Portainer stack definition was updated so the rename survives future stack r
 
 - Sonarr
 - Radarr
-- Overseerr
+- Overseerr / Seerr
 - qBittorrent
+- Gluetun
 - Prowlarr
 - Nginx Proxy Manager
 - Docker Networking
