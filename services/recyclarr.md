@@ -4,17 +4,31 @@
 
 Recyclarr is used to manage and synchronize Sonarr and Radarr quality profiles, custom formats, and TRaSH Guides recommendations. The goal is to make media quality configuration easier to maintain over time instead of manually rebuilding profiles in each application.
 
-This project is being implemented in short sessions to avoid risky, late-night profile changes.
+This project is being implemented in short sessions to avoid risky profile changes.
 
-Last updated: **2026-07-04**
+Last updated: **2026-07-09**
 
 ## Current Status
 
 Status: **In Progress**
 
-Important safety note: Recyclarr has been deployed and tested, but no real `sync` has been run yet. Sonarr and Radarr profiles have not been changed by Recyclarr.
+Recyclarr is deployed and has been configured enough to maintain local configuration files. The current safe operating posture is to keep only the intended active config in `/config/configs` and move disabled or experimental configs into `/config/configs-disabled`.
 
-Session 1 completed:
+Latest verified config state on the NAS:
+
+```text
+/volume1/docker/recyclarr/config/configs:
+uhd-bluray-web.yml
+
+/volume1/docker/recyclarr/config/configs-disabled:
+remux-2160p-combined.yml
+```
+
+Important safety note: before making further Recyclarr changes, confirm whether a real `sync` has already been run. Earlier sessions were preview/staging-focused, but this document should not assume Sonarr or Radarr are unchanged unless the current app state has been checked.
+
+## Session Summary
+
+### Session 1 Completed
 
 - Deployed Recyclarr as a dedicated Portainer Stack.
 - Confirmed the container is running.
@@ -22,33 +36,59 @@ Session 1 completed:
 - Created and initialized the Recyclarr configuration directory.
 - Fixed container volume permissions.
 - Confirmed Recyclarr can initialize the official resource providers for TRaSH Guides and config templates.
-- No Sonarr or Radarr changes were applied.
+- No Sonarr or Radarr changes were applied during this initial deployment session.
 
-Session 2 completed:
+### Session 2 Completed
 
 - Reviewed Recyclarr v8 CLI behavior while attempting to move from deployment into template-based configuration.
 - Confirmed the Recyclarr v8 CLI does not support the older/example `--raw` flag for template listing.
 - Confirmed `recyclarr config create -t TEMPLATE_NAME` initializes the official providers but does not create a usable config when `TEMPLATE_NAME` is only a placeholder.
 - Confirmed the local template workflow needs the actual template identifier before a real config can be generated.
 - Stopped before applying any templates or syncing changes into Sonarr or Radarr.
-- No Sonarr or Radarr changes were applied.
+- No Sonarr or Radarr changes were applied during this session.
 
-Session 3 planned:
+### 2026-07-09 Config Cleanup Completed
 
-- Run the supported template list command and capture the actual available template IDs.
-- Identify the correct Recyclarr v8 template IDs for the intended Sonarr and Radarr setup.
-- Generate a real Sonarr and/or Radarr template config using an actual template ID.
-- Configure Sonarr and Radarr connectivity.
-- Add API keys safely.
-- Run `sync --preview` only.
-- Review proposed changes before applying anything.
+The combined Remux config was disabled by moving it out of the active Recyclarr configs directory:
 
-Session 4 planned:
+```powershell
+ssh ugreen "sudo mv /volume1/docker/recyclarr/config/configs/remux-2160p-combined.yml /volume1/docker/recyclarr/config/configs-disabled/remux-2160p-combined.yml"
+```
 
-- Apply approved configuration.
-- Validate profiles in Sonarr and Radarr.
-- Fine tune quality, anime, 1080p, and 4K behavior.
-- Complete final documentation.
+The active and disabled config directories were then checked:
+
+```powershell
+ssh ugreen "sudo ls -la /volume1/docker/recyclarr/config/configs /volume1/docker/recyclarr/config/configs-disabled"
+```
+
+Observed active config directory:
+
+```text
+/volume1/docker/recyclarr/config/configs:
+total 16
+drwxr-xr-x 1 1000 1000   62 Jul  9 17:55 .
+drwxrwx--- 1 1000 1000  154 Jul  4 10:07 ..
+-rw-r--r-- 1 1000 1000 6210 Jul  4 10:09 uhd-bluray-web.yml
+```
+
+Current active config:
+
+```text
+uhd-bluray-web.yml
+```
+
+Current disabled config:
+
+```text
+remux-2160p-combined.yml
+```
+
+Reason for disabling `remux-2160p-combined.yml`:
+
+- Keeps the active Recyclarr config set smaller and easier to reason about.
+- Avoids syncing an extra 2160p Remux-oriented config while the setup is still being tuned.
+- Preserves the config for later review instead of deleting it.
+- Makes rollback simple by moving the file back into `/configs`.
 
 ## Deployment
 
@@ -115,11 +155,24 @@ Observed initialized directories:
 
 ```text
 /config/configs
+/config/configs-disabled
 /config/includes
 /config/logs
 /config/resources
 /config/state
 /config/settings.yml
+```
+
+Active config directory:
+
+```text
+/volume1/docker/recyclarr/config/configs
+```
+
+Disabled config directory:
+
+```text
+/volume1/docker/recyclarr/config/configs-disabled
 ```
 
 ## Commands Used
@@ -169,6 +222,20 @@ Inspect config files from inside the container:
 docker exec recyclarr find /config -maxdepth 3 -type f -print
 docker exec recyclarr ls -la /config /config/configs
 docker exec recyclarr cat /config/configs/recyclarr.yml
+```
+
+Disable a config without deleting it:
+
+```bash
+sudo mkdir -p /volume1/docker/recyclarr/config/configs-disabled
+sudo mv /volume1/docker/recyclarr/config/configs/remux-2160p-combined.yml /volume1/docker/recyclarr/config/configs-disabled/remux-2160p-combined.yml
+```
+
+From Windows PowerShell over SSH:
+
+```powershell
+ssh ugreen "sudo mv /volume1/docker/recyclarr/config/configs/remux-2160p-combined.yml /volume1/docker/recyclarr/config/configs-disabled/remux-2160p-combined.yml"
+ssh ugreen "sudo ls -la /volume1/docker/recyclarr/config/configs /volume1/docker/recyclarr/config/configs-disabled"
 ```
 
 ## Session 2 Commands and Findings
@@ -251,21 +318,16 @@ After this, Recyclarr was able to create its config structure.
 
 The Recyclarr v8 CLI differs from older guides.
 
-Important observations from Session 1:
+Important observations:
 
 - The Docker image is pinned to `ghcr.io/recyclarr/recyclarr:8`.
 - The old `create-config` command is not valid.
 - The v8 command is `recyclarr config create`.
 - `recyclarr config list` requires a subcommand such as `local` or `templates`.
 - `recyclarr config list templates` confirmed templates are available.
-- More research is needed before applying templates because older examples may not match v8 behavior.
-
-Important observations from Session 2:
-
 - `recyclarr config create -t TEMPLATE_NAME` should not be used literally because `TEMPLATE_NAME` is only a placeholder.
 - `recyclarr config list templates --raw` is invalid in Recyclarr v8.
-- The next safe step is to list the available templates using the supported command, choose the correct template ID, and then create a config from that exact ID.
-- No Sonarr or Radarr profile changes have been made yet.
+- The safe next step is always to verify local configs and use `sync --preview` before any real sync.
 
 ## Validation Completed
 
@@ -288,11 +350,35 @@ Initializing provider: official (type: trash-guides)
 Initializing provider: official (type: config-templates)
 ```
 
+Latest active config check showed only:
+
+```text
+uhd-bluray-web.yml
+```
+
 ## Backup and Rollback Plan
 
-No Sonarr or Radarr profile changes were applied in Session 1 or Session 2.
+Current rollback for the latest config cleanup:
 
-Rollback for current Recyclarr-only work:
+1. Move the disabled config back into the active config directory:
+
+```bash
+sudo mv /volume1/docker/recyclarr/config/configs-disabled/remux-2160p-combined.yml /volume1/docker/recyclarr/config/configs/remux-2160p-combined.yml
+```
+
+2. Confirm both configs are present if the combined Remux config is needed again:
+
+```bash
+sudo ls -la /volume1/docker/recyclarr/config/configs
+```
+
+3. Run preview before applying anything:
+
+```bash
+docker exec recyclarr recyclarr sync --preview
+```
+
+General rollback for Recyclarr-only work:
 
 1. Stop and remove the Recyclarr stack in Portainer.
 2. Optionally remove the config directory:
@@ -301,9 +387,9 @@ Rollback for current Recyclarr-only work:
 rm -rf /volume1/docker/recyclarr
 ```
 
-3. Confirm Sonarr and Radarr are unaffected.
+3. Confirm Sonarr and Radarr are unaffected or restore their profile settings from backup/export if a real sync had already been applied.
 
-Future rollback before applying templates:
+Future rollback before applying templates or new configs:
 
 - Export or document current Sonarr and Radarr quality profiles.
 - Save a copy of the Recyclarr config before each major change.
@@ -316,27 +402,26 @@ Before continuing Recyclarr implementation, review this documentation and confir
 
 - The current status still matches the NAS.
 - The stack path and mounted config path are correct.
-- Recyclarr is still only staged and has not modified Sonarr or Radarr.
+- `uhd-bluray-web.yml` is the only active config currently intended to run.
+- `remux-2160p-combined.yml` should remain disabled for now.
 - The next session will use `sync --preview` before any real sync.
 
 ## Next Session Checklist
 
-- Run the supported template list command:
+- Confirm local configs:
 
 ```bash
-docker exec recyclarr recyclarr config list templates
+docker exec recyclarr recyclarr config list local
 ```
 
-- Capture the full template list output in the session notes.
-- Identify the correct template ID for the intended Sonarr and Radarr setup.
-- Generate a config using the actual template ID, not the placeholder:
+- Confirm active config files:
 
 ```bash
-docker exec recyclarr recyclarr config create -t <actual-template-id>
+ls -la /volume1/docker/recyclarr/config/configs
+ls -la /volume1/docker/recyclarr/config/configs-disabled
 ```
 
-- Configure Sonarr API connection.
-- Configure Radarr API connection.
+- Review `uhd-bluray-web.yml` before syncing.
 - Run preview only:
 
 ```bash
@@ -344,3 +429,4 @@ docker exec recyclarr recyclarr sync --preview
 ```
 
 - Review proposed changes before applying.
+- If the preview looks correct, decide whether to apply only the active `uhd-bluray-web.yml` config.
