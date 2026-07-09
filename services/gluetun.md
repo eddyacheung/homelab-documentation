@@ -34,7 +34,7 @@ Internet
 qBittorrent shares Gluetun's network namespace:
 
 ```yaml
-network_mode: "service:gluetun"
+network_mode: service:gluetun
 ```
 
 This means qBittorrent does not have its own independent Docker network path. If Gluetun is stopped or the VPN tunnel is unavailable, qBittorrent loses internet connectivity instead of falling back to the NAS WAN connection.
@@ -43,39 +43,76 @@ This means qBittorrent does not have its own independent Docker network path. If
 
 ## Deployment
 
-- **Host:** UGREEN DXP4800 Plus
-- **Portainer stack:** `compose/38`
-- **Compose file:** `/volume1/docker/portainer/compose/38/docker-compose.yml`
-- **VPN container:** `gluetun`
-- **Protected application:** `qbittorrent`
-- **VPN provider:** NordVPN
-- **VPN protocol:** OpenVPN
-- **Docker network:** `media-net`
+| Setting | Value |
+| --- | --- |
+| Host | UGREEN DXP4800 Plus |
+| Portainer stack | `qbittorrent` |
+| VPN container | `gluetun` |
+| Protected application | `qbittorrent` |
+| VPN provider | NordVPN |
+| VPN protocol | OpenVPN |
+| Docker network | `media-net` |
+
+The old anonymous / numeric stack was replaced on 2026-07-08. Current state:
+
+```text
+Stack:       qbittorrent
+Project:     qbittorrent
+Containers:  gluetun, qbittorrent
+```
 
 ---
 
-## Environment File
+## Important Network Pattern
 
-OpenVPN credentials are stored outside the Compose file:
+Gluetun attaches to `media-net`:
 
-```text
-/volume1/docker/qbittorrent/.env
+```yaml
+services:
+  gluetun:
+    networks:
+      - media-net
 ```
 
-Expected variable names:
+qBittorrent does not attach directly to `media-net`. It shares Gluetun's network namespace:
 
-```text
-OPENVPN_USER
-OPENVPN_PASSWORD
+```yaml
+services:
+  qbittorrent:
+    network_mode: service:gluetun
 ```
 
-The `.env` file should remain protected:
+This is intentional.
 
-```bash
-chmod 600 /volume1/docker/qbittorrent/.env
+Reason:
+
+- Gluetun is the reachable network endpoint.
+- qBittorrent is forced through the VPN gateway.
+- Radarr, Sonarr, and Prowlarr can reach qBittorrent through `gluetun:8888` on `media-net`.
+
+---
+
+## Environment Variables
+
+OpenVPN credentials must use Gluetun's expected variable names:
+
+```yaml
+OPENVPN_USER: <nordvpn-service-username>
+OPENVPN_PASSWORD: <nordvpn-service-password>
 ```
 
-Do not commit VPN credentials to Git.
+Do not use normal Nord account login credentials. Use NordVPN service / manual setup credentials.
+
+Important YAML note:
+
+```yaml
+OPENVPN_USER: value
+OPENVPN_PASSWORD: value
+```
+
+Do not write these as `OPENVPN_USER=value` inside a YAML mapping. That malformed syntax caused Gluetun to receive bad or missing credentials and resulted in OpenVPN `AUTH_FAILED` errors.
+
+Do not commit real VPN credentials to Git.
 
 ---
 
@@ -107,7 +144,7 @@ The qBittorrent WebUI is published through the Gluetun container because qBittor
 
 ## Access
 
-qBittorrent WebUI:
+qBittorrent WebUI from the LAN:
 
 ```text
 http://NAS-IP:8888
@@ -119,13 +156,20 @@ Example:
 http://192.168.10.101:8888
 ```
 
+Internal Docker service access from Radarr, Sonarr, and Prowlarr:
+
+```text
+Host: gluetun
+Port: 8888
+```
+
+Do not use `qbittorrent` as the host from other containers. qBittorrent does not have its own Docker network endpoint when it uses `network_mode: service:gluetun`.
+
 ---
 
-## Prowlarr Download Client
+## Radarr / Sonarr / Prowlarr Download Client
 
-Because qBittorrent shares Gluetun's network namespace, qBittorrent does not appear as its own reachable Docker hostname from Prowlarr.
-
-Prowlarr should connect to qBittorrent through the Gluetun container:
+Use:
 
 ```text
 Host: gluetun
@@ -133,49 +177,18 @@ Port: 8888
 Use SSL: unchecked
 ```
 
-Do not use this setting in Prowlarr:
+Avoid:
 
 ```text
 Host: qbittorrent
 Port: 8888
 ```
 
-That hostname will fail because qBittorrent is not attached to `media-net` as a separate network endpoint when it is running with:
-
-```yaml
-network_mode: "service:gluetun"
-```
-
-Useful checks:
-
-```bash
-docker inspect qbittorrent --format '{{.HostConfig.NetworkMode}}'
-```
-
-Expected result:
+Also avoid using the NAS IP from inside the media stack unless troubleshooting. The preferred internal path is Docker DNS over `media-net`:
 
 ```text
-container:<gluetun-container-id>
+radarr / sonarr / prowlarr -> gluetun:8888 -> qbittorrent
 ```
-
-Confirm the shared network owner:
-
-```bash
-docker ps --filter id=<gluetun-container-id> --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
-```
-
-Expected result should show:
-
-```text
-gluetun   qmcgaw/gluetun:latest   Up ... (healthy)
-```
-
-Validation from Prowlarr:
-
-1. Set the qBittorrent download client host to `gluetun`.
-2. Keep the port set to `8888`.
-3. Click **Test** in Prowlarr.
-4. Confirm a release can be sent from Prowlarr and appears in qBittorrent.
 
 ---
 
@@ -184,14 +197,14 @@ Validation from Prowlarr:
 Check container status:
 
 ```bash
-docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "gluetun|qbittorrent"
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Label \"com.docker.compose.project\"}}" | grep -E "gluetun|qbittorrent"
 ```
 
 Expected:
 
 ```text
-gluetun       Up ... (healthy)
-qbittorrent   Up ...
+gluetun       Up ... (healthy)   qbittorrent
+qbittorrent   Up ...             qbittorrent
 ```
 
 Check Gluetun logs:
@@ -213,12 +226,6 @@ Check qBittorrent WebUI from the NAS:
 curl -I http://127.0.0.1:8888
 ```
 
-Expected:
-
-```text
-HTTP/1.1 200 OK
-```
-
 Check qBittorrent public IP:
 
 ```bash
@@ -229,6 +236,18 @@ Expected result:
 
 - Public IP should be a NordVPN endpoint
 - Public IP should not be the home WAN IP
+
+Confirm Gluetun is attached to `media-net`:
+
+```bash
+docker inspect gluetun --format '{{range $k,$v := .NetworkSettings.Networks}}{{println $k}}{{end}}'
+```
+
+Expected:
+
+```text
+media-net
+```
 
 ---
 
@@ -252,24 +271,18 @@ Expected result:
 No internet from qbittorrent
 ```
 
-Restart the stack:
+Restart the stack from Portainer, or from the host-side Compose directory if needed:
 
 ```bash
-cd /volume1/docker/portainer/compose/38
+cd /volume1/docker/qbittorrent
 docker compose up -d
-```
-
-Re-check VPN IP:
-
-```bash
-docker exec qbittorrent curl -s https://ipinfo.io/ip
 ```
 
 ---
 
 ## qBittorrent SOCKS5 Proxy
 
-The old qBittorrent SOCKS5 proxy configuration was removed.
+The old qBittorrent SOCKS5 proxy configuration should remain disabled.
 
 Reason:
 
@@ -299,30 +312,39 @@ Future improvement:
 
 ---
 
+## 2026-07-08 Cleanup Notes
+
+The previous qBittorrent/Gluetun deployment appeared in Portainer as an external stack named `38`. Its Compose folder was missing, so the stack could not be cleanly edited.
+
+Cleanup performed:
+
+1. Backed up running container details with `docker inspect`.
+2. Reconstructed the Compose file.
+3. Recreated the stack as `qbittorrent`.
+4. Attached Gluetun to `media-net`.
+5. Kept qBittorrent behind Gluetun with `network_mode: service:gluetun`.
+6. Restored Radarr, Sonarr, and Prowlarr download client settings to `gluetun:8888`.
+7. Redeployed through Portainer so the Editor tab is available.
+
+---
+
 ## Recovery / Rollback
 
-A backup of the previous qBittorrent Compose file was created before migration:
+Backups were created before migration using Docker inspect output and Compose file copies.
 
-```text
-/volume1/docker/qbittorrent/backups/
-```
+To recover from a broken deployment:
 
-To roll back:
+1. Stop the `qbittorrent` stack in Portainer.
+2. Restore the last known good Compose configuration.
+3. Confirm OpenVPN credentials are valid and use YAML mapping syntax.
+4. Redeploy the stack.
+5. Verify Gluetun logs include `Initialization Sequence Completed`.
+6. Test Radarr, Sonarr, and Prowlarr download client connectivity.
 
-1. Stop the current stack.
-2. Restore the backed-up qBittorrent Compose file.
-3. Redeploy the stack.
-4. Re-enable the old qBittorrent proxy only if returning to the old SOCKS5 design.
-
-Example:
+Host-side fallback:
 
 ```bash
-cd /volume1/docker/portainer/compose/38
-docker compose down
-
-cp /volume1/docker/qbittorrent/backups/<backup-file> \
-  /volume1/docker/portainer/compose/38/docker-compose.yml
-
+cd /volume1/docker/qbittorrent
 docker compose up -d
 ```
 
@@ -331,9 +353,8 @@ docker compose up -d
 ## Lessons Learned
 
 - Gluetun and qBittorrent should live in the same Compose stack when using `network_mode: service:gluetun`.
-- The qBittorrent container can be safely recreated when config and downloads are bind-mounted.
+- Gluetun should attach to `media-net`; qBittorrent should not attach directly.
+- Radarr, Sonarr, and Prowlarr should use `gluetun:8888` to reach qBittorrent.
+- OpenVPN credentials must use valid YAML key/value syntax.
 - Gluetun's firewall must explicitly allow qBittorrent WebUI access with `FIREWALL_INPUT_PORTS`.
-- The WebUI can work inside the shared namespace while still being blocked from the LAN by Gluetun's firewall.
-- OpenVPN credentials must use Gluetun's expected variable names: `OPENVPN_USER` and `OPENVPN_PASSWORD`.
 - The kill switch should be tested directly after deployment, not assumed.
-- Prowlarr must use `gluetun:8888` as the qBittorrent download client endpoint when qBittorrent shares Gluetun's network namespace.
