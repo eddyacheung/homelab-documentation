@@ -2,167 +2,152 @@
 
 ## Purpose
 
-Watchtower keeps selected Docker containers updated by checking for newer container images and recreating containers when updates are available.
+Watchtower monitors Docker images and recreates containers when updates are available.
 
-This homelab uses Watchtower in a conservative opt-in model instead of updating every container automatically.
+In this homelab, Watchtower is currently deployed as a Portainer-managed stack. It is intentionally configured conservatively after the July 2026 stack cleanup so it remains easy to inspect and recover.
+
+---
 
 ## Deployment
 
-- **Host:** UGREEN DXP4800 Plus
-- **Container name:** `watchtower`
-- **Image:** `containrrr/watchtower:latest`
-- **Deployment method:** Docker Compose
-- **Compose directory:** `/volume1/docker/watchtower`
-- **Compose file:** `/volume1/docker/watchtower/docker-compose.yml`
+| Setting | Value |
+| --- | --- |
+| Host | UGREEN DXP4800 Plus |
+| Stack name | `watchtower` |
+| Container name | `watchtower` |
+| Image | `containrrr/watchtower:latest` |
+| Deployment method | Portainer stack |
+| Compose source | Portainer Editor |
+| Supporting host path | `/volume1/docker/watchtower/docker-compose.yml` |
 
-## Update Strategy
+The Watchtower stack was redeployed through Portainer on 2026-07-08 so the Portainer **Editor** tab is available again.
 
-Watchtower is configured for label-based updates only:
+---
+
+## Current Configuration
+
+Important settings:
+
+```yaml
+TZ: America/Chicago
+DOCKER_API_VERSION: "1.40"
+WATCHTOWER_CLEANUP: "true"
+WATCHTOWER_REMOVE_VOLUMES: "false"
+WATCHTOWER_LABEL_ENABLE: "false"
+WATCHTOWER_INCLUDE_STOPPED: "false"
+WATCHTOWER_INCLUDE_RESTARTING: "true"
+WATCHTOWER_ROLLING_RESTART: "false"
+WATCHTOWER_TIMEOUT: "30s"
+WATCHTOWER_LOG_FORMAT: pretty
+WATCHTOWER_SCHEDULE: "0 0 12 * * *"
+```
+
+Schedule meaning:
+
+```text
+Every day at 12:00 PM Central time
+```
+
+---
+
+## Docker API Compatibility
+
+Watchtower previously entered a restart loop with this error:
+
+```text
+client version 1.25 is too old. Minimum supported API version is 1.40
+```
+
+The fix was to explicitly set:
+
+```yaml
+DOCKER_API_VERSION: "1.40"
+```
+
+Keep this value in place unless Docker Engine or Watchtower behavior changes and the setting is retested.
+
+---
+
+## Rolling Restart Disabled
+
+Rolling restart is disabled:
+
+```yaml
+WATCHTOWER_ROLLING_RESTART: "false"
+```
+
+Reason: qBittorrent uses Gluetun as its network namespace with:
+
+```yaml
+network_mode: service:gluetun
+```
+
+Watchtower reported that qBittorrent depends on another container and that this is not compatible with rolling restarts. Disabling rolling restarts prevents Watchtower from failing against dependency-linked containers.
+
+---
+
+## Current Update Strategy
+
+Current behavior:
+
+```yaml
+WATCHTOWER_LABEL_ENABLE: "false"
+```
+
+This means Watchtower checks all containers except containers explicitly disabled by label.
+
+Future improvement: convert Watchtower to a label-based opt-in model so only low-risk containers are automatically updated. That project should include a backup plan, a rollback plan, and explicit labels on selected containers.
+
+Recommended future opt-in setting:
 
 ```yaml
 WATCHTOWER_LABEL_ENABLE: "true"
 ```
 
-Containers are only updated automatically when this label is present:
+Recommended opt-in label:
 
 ```yaml
 labels:
   - com.centurylinklabs.watchtower.enable=true
 ```
 
-This prevents critical services from being unexpectedly recreated during image updates.
-
-## Schedule
-
-Watchtower checks for updates weekly:
-
-```yaml
-WATCHTOWER_SCHEDULE: "0 0 4 * * SUN"
-```
-
-Schedule meaning:
-
-```text
-Sunday at 4:00 AM
-```
-
-Timezone:
-
-```yaml
-TZ: America/Chicago
-```
-
-## Current Auto-Update Containers
-
-The following containers are currently opted into automatic updates:
-
-- Homarr
-- Uptime Kuma
-- Open WebUI
-
-These services were selected because they are lower-risk than DNS, database, proxy, or core media services.
-
-## Manual Update Containers
-
-The following containers should remain manually updated:
-
-- Portainer
-- Pi-hole
-- Unbound
-- Nginx Proxy Manager
-- Plex
-- qBittorrent
-- Sonarr
-- Radarr
-- Prowlarr
-- Seerr
-- PostgreSQL
-- Homebridge
-
-These services are infrastructure, networking, database-backed, downloader, proxy, or core media services where release notes should be reviewed before updating.
-
-qBittorrent should remain excluded at least until the future Gluetun + NordVPN project is completed and a clear rollback plan exists.
-
-## Key Configuration
-
-Important settings:
-
-```yaml
-TZ: America/Chicago
-WATCHTOWER_LABEL_ENABLE: "true"
-WATCHTOWER_CLEANUP: "true"
-WATCHTOWER_REMOVE_VOLUMES: "false"
-WATCHTOWER_INCLUDE_STOPPED: "false"
-WATCHTOWER_INCLUDE_RESTARTING: "true"
-WATCHTOWER_ROLLING_RESTART: "true"
-WATCHTOWER_TIMEOUT: 30s
-WATCHTOWER_LOG_FORMAT: pretty
-WATCHTOWER_SCHEDULE: "0 0 4 * * SUN"
-```
+---
 
 ## Verification Commands
 
-Check container health:
+Check container status:
 
 ```bash
-docker ps --filter name=watchtower
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Label \"com.docker.compose.project\"}}" | grep watchtower
 ```
 
-Inspect Watchtower environment:
-
-```bash
-docker inspect watchtower --format '{{ index .Config.Env }}'
-```
-
-Check which containers are opted in:
-
-```bash
-docker inspect Homarr --format '{{json .Config.Labels}}'
-docker inspect uptime-kuma --format '{{json .Config.Labels}}'
-docker inspect open-webui --format '{{json .Config.Labels}}'
-```
-
-Expected label:
+Expected result:
 
 ```text
-"com.centurylinklabs.watchtower.enable":"true"
-```
-
-Confirm intentionally excluded services do not have the opt-in label:
-
-```bash
-docker inspect plex --format '{{json .Config.Labels}}'
-docker inspect sonarr --format '{{json .Config.Labels}}'
-docker inspect radarr --format '{{json .Config.Labels}}'
-docker inspect prowlarr --format '{{json .Config.Labels}}'
-docker inspect qbittorrent --format '{{json .Config.Labels}}'
+watchtower   Up ... (healthy)   watchtower
 ```
 
 View recent logs:
 
 ```bash
-docker logs watchtower --tail 50
+docker logs --tail=50 watchtower
 ```
 
-## Cleanup Performed
-
-An older Portainer-managed Watchtower compose folder existed under:
+Expected healthy startup includes:
 
 ```text
-/volume1/docker/portainer/compose/3
+Watchtower 1.7.1
+Checking all containers
+Scheduling first run
 ```
 
-The active Watchtower container was verified to be managed from:
+Inspect environment:
 
-```text
-/volume1/docker/watchtower/docker-compose.yml
+```bash
+docker inspect watchtower --format '{{range .Config.Env}}{{println .}}{{end}}' | sort
 ```
 
-The old Portainer compose folder was archived rather than deleted:
-
-```text
-/volume1/docker/portainer/compose-archive/watchtower-old-3-2026-06-28-1542
-```
+---
 
 ## Recovery
 
@@ -172,18 +157,43 @@ If Watchtower causes problems, stop it first:
 docker stop watchtower
 ```
 
-To recreate Watchtower from Compose:
+To recreate from the host-side Compose file:
 
 ```bash
 cd /volume1/docker/watchtower
 docker compose up -d
 ```
 
-To disable automatic updates without removing Watchtower, remove the Watchtower opt-in label from individual service stacks.
+Preferred long-term management is through the Portainer stack named `watchtower`.
+
+---
+
+## Cleanup History
+
+### 2026-06-28
+
+An older Watchtower compose folder was archived:
+
+```text
+/volume1/docker/portainer/compose-archive/watchtower-old-3-2026-06-28-1542
+```
+
+### 2026-07-08
+
+Watchtower was recreated as a proper Portainer-managed stack after a restart loop was fixed.
+
+Key fixes:
+
+- Added `DOCKER_API_VERSION=1.40`
+- Disabled rolling restarts
+- Restored Portainer Editor access
+- Verified the container became healthy
+
+---
 
 ## Lessons Learned
 
-- Watchtower previously updated all containers automatically.
-- It was migrated to a safer label-based opt-in configuration.
-- Critical services should not be automatically updated until there is a clear rollback plan.
-- Container labels should be managed through Compose or Portainer stack definitions, not by trying to modify running containers.
+- Watchtower should be treated carefully because it can recreate critical infrastructure containers.
+- `DOCKER_API_VERSION=1.40` is required in this environment.
+- `WATCHTOWER_ROLLING_RESTART=false` is required with the current qBittorrent/Gluetun dependency pattern.
+- Label-based opt-in automatic updates are still the preferred future state, but should be implemented as a separate change with backups and rollback steps.
