@@ -2,6 +2,10 @@
 
 Documentation for my homelab, Linux administration, Docker infrastructure, networking, and self-hosted services.
 
+## Project Dashboard
+
+See [`DASHBOARD.md`](DASHBOARD.md) for the current priority, upcoming work, completed projects, and maintenance follow-ups.
+
 ## Hardware
 
 - UGREEN DXP4800 Plus (64 GB RAM)
@@ -11,6 +15,7 @@ Documentation for my homelab, Linux administration, Docker infrastructure, netwo
 ## Repository Structure
 
 ```text
+DASHBOARD.md      Current project priorities and status
 services/         Individual service documentation
 networking/       DNS, Docker networking, UniFi, Tailscale
 linux/            Linux administration notes and references
@@ -37,7 +42,7 @@ changes/          Dated infrastructure change notes
 - Unbound
 - Nginx Proxy Manager
 - Cloudflare Tunnel
-- Recyclarr (In Progress)
+- Recyclarr
 - Uptime Kuma
 - Homarr
 
@@ -52,6 +57,21 @@ changes/          Dated infrastructure change notes
 - Tailscale remote access
 
 ## Recent Infrastructure Work
+
+### Recyclarr Completion - 2026-07-10
+
+- Verified Radarr and Sonarr connectivity.
+- Applied the official `UHD Bluray + WEB` Radarr profile.
+- Applied the official `WEB-2160p` Sonarr profile.
+- Confirmed custom formats, quality definitions, and profiles are current.
+- Verified the daily `@daily` scheduled sync succeeds.
+- Moved the unused placeholder `remux-2160p-combined.yml` configuration to `configs-disabled`.
+
+Detailed notes:
+
+```text
+services/recyclarr.md
+```
 
 ### Portainer Stack Cleanup - 2026-07-08
 
@@ -72,36 +92,9 @@ changes/2026-07-08-portainer-stack-cleanup.md
 
 ## Active Projects
 
-### Recyclarr
+The actively maintained list now lives in [`DASHBOARD.md`](DASHBOARD.md).
 
-Status: **In Progress**
-
-Session 1 complete:
-
-- Deployed Recyclarr as a dedicated Portainer Stack.
-- Attached Recyclarr to `media-net`.
-- Initialized the Recyclarr config directory.
-- Fixed config volume permissions.
-- Confirmed official resource providers initialize successfully.
-- No Sonarr or Radarr profile changes were applied.
-
-Session 2 complete:
-
-- Confirmed the older/example Recyclarr commands do not map cleanly to the current v8 CLI.
-- Confirmed `recyclarr config create -t TEMPLATE_NAME` only used a placeholder value and did not generate a usable service config.
-- Confirmed `recyclarr config list templates --raw` is invalid in Recyclarr v8.
-- Documented that the next safe step is to list supported templates, select a real template ID, and run preview only.
-- No Sonarr or Radarr profile changes were applied.
-
-Remaining:
-
-- Identify the correct Recyclarr v8 template IDs.
-- Configure official Recyclarr v8 templates.
-- Connect Recyclarr to Sonarr and Radarr.
-- Add API keys safely.
-- Run `sync --preview`.
-- Review proposed changes before applying.
-- Validate and document final profile behavior.
+Current next project: **Deploy Unpackerr**.
 
 ## Networking Documentation
 
