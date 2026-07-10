@@ -4,7 +4,7 @@
 
 Watchtower monitors Docker images and recreates containers when updates are available.
 
-In this homelab, Watchtower is currently deployed as a Portainer-managed stack. It is intentionally configured conservatively after the July 2026 stack cleanup so it remains easy to inspect and recover.
+In this homelab, Watchtower is deployed as a Portainer-managed stack and uses a conservative label-based opt-in policy. Only containers explicitly approved with the Watchtower enable label are eligible for automatic updates.
 
 ---
 
@@ -20,7 +20,7 @@ In this homelab, Watchtower is currently deployed as a Portainer-managed stack. 
 | Compose source | Portainer Editor |
 | Supporting host path | `/volume1/docker/watchtower/docker-compose.yml` |
 
-The Watchtower stack was redeployed through Portainer on 2026-07-08 so the Portainer **Editor** tab is available again.
+The Watchtower stack was redeployed through Portainer on 2026-07-08 so the Portainer **Editor** tab is available.
 
 ---
 
@@ -33,7 +33,7 @@ TZ: America/Chicago
 DOCKER_API_VERSION: "1.40"
 WATCHTOWER_CLEANUP: "true"
 WATCHTOWER_REMOVE_VOLUMES: "false"
-WATCHTOWER_LABEL_ENABLE: "false"
+WATCHTOWER_LABEL_ENABLE: "true"
 WATCHTOWER_INCLUDE_STOPPED: "false"
 WATCHTOWER_INCLUDE_RESTARTING: "true"
 WATCHTOWER_ROLLING_RESTART: "false"
@@ -47,6 +47,8 @@ Schedule meaning:
 ```text
 Every day at 12:00 PM Central time
 ```
+
+Watchtower currently runs without notifications.
 
 ---
 
@@ -86,30 +88,48 @@ Watchtower reported that qBittorrent depends on another container and that this 
 
 ---
 
-## Current Update Strategy
+## Label-Based Opt-In Update Strategy
 
-Current behavior:
-
-```yaml
-WATCHTOWER_LABEL_ENABLE: "false"
-```
-
-This means Watchtower checks all containers except containers explicitly disabled by label.
-
-Future improvement: convert Watchtower to a label-based opt-in model so only low-risk containers are automatically updated. That project should include a backup plan, a rollback plan, and explicit labels on selected containers.
-
-Recommended future opt-in setting:
+Watchtower is configured with:
 
 ```yaml
 WATCHTOWER_LABEL_ENABLE: "true"
 ```
 
-Recommended opt-in label:
+This means Watchtower ignores containers unless they explicitly contain the enable label.
+
+Approved containers use this service-level Compose label:
 
 ```yaml
 labels:
   - com.centurylinklabs.watchtower.enable=true
 ```
+
+Example:
+
+```yaml
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+```
+
+The label belongs inside the individual service definition at the same indentation level as `image`, `container_name`, `restart`, `volumes`, and `networks`.
+
+Containers without the label remain manual-update only. This is intentional for critical, stateful, or tightly coupled services.
+
+Particular care should be taken with:
+
+- qBittorrent and Gluetun
+- Plex
+- Pi-hole and Unbound
+- Portainer
+- databases
+- dependency-linked or stateful containers
+
+The live Portainer stack definitions remain the source of truth for which containers are currently opted in.
 
 ---
 
@@ -118,13 +138,13 @@ labels:
 Check container status:
 
 ```bash
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Label \"com.docker.compose.project\"}}" | grep watchtower
+docker ps --filter name=watchtower
 ```
 
 Expected result:
 
 ```text
-watchtower   Up ... (healthy)   watchtower
+watchtower   Up ... (healthy)
 ```
 
 View recent logs:
@@ -137,14 +157,36 @@ Expected healthy startup includes:
 
 ```text
 Watchtower 1.7.1
-Checking all containers
+Only checking containers using enable label
 Scheduling first run
 ```
 
-Inspect environment:
+Inspect the complete container definition from Windows PowerShell:
 
-```bash
-docker inspect watchtower --format '{{range .Config.Env}}{{println .}}{{end}}' | sort
+```powershell
+ssh ugreen "sudo docker inspect watchtower" > .\watchtower-inspect.json
+$wt = Get-Content .\watchtower-inspect.json -Raw | ConvertFrom-Json
+$wt[0].Config.Env | Sort-Object
+```
+
+Expected environment value:
+
+```text
+WATCHTOWER_LABEL_ENABLE=true
+```
+
+Inspect labels on a candidate container:
+
+```powershell
+ssh ugreen "sudo docker inspect cloudflared" > .\cloudflared-inspect.json
+$cf = Get-Content .\cloudflared-inspect.json -Raw | ConvertFrom-Json
+$cf[0].Config.Labels
+```
+
+Expected label:
+
+```text
+com.centurylinklabs.watchtower.enable : true
 ```
 
 ---
@@ -164,7 +206,11 @@ cd /volume1/docker/watchtower
 docker compose up -d
 ```
 
-Preferred long-term management is through the Portainer stack named `watchtower`.
+Preferred management is through the Portainer stack named `watchtower`.
+
+To temporarily stop all automatic updates without removing labels, disable or stop the Watchtower container.
+
+To return to broad scanning, `WATCHTOWER_LABEL_ENABLE` could be changed back to `false`, but this is not the recommended operating state.
 
 ---
 
@@ -189,6 +235,21 @@ Key fixes:
 - Restored Portainer Editor access
 - Verified the container became healthy
 
+### 2026-07-10
+
+The label-based opt-in project was completed.
+
+Validation performed:
+
+- Confirmed the container was healthy.
+- Confirmed the previous live configuration used `WATCHTOWER_LABEL_ENABLE=false` and scanned all containers except explicit exclusions.
+- Added the missing Watchtower enable label to the Cloudflare Tunnel service.
+- Confirmed the remaining intended automatic-update containers already had labels.
+- Changed `WATCHTOWER_LABEL_ENABLE` to `true` in the Watchtower stack.
+- Redeployed the stack.
+- Confirmed the live environment reports `WATCHTOWER_LABEL_ENABLE=true`.
+- Confirmed startup logs report `Only checking containers using enable label`.
+
 ---
 
 ## Lessons Learned
@@ -196,4 +257,6 @@ Key fixes:
 - Watchtower should be treated carefully because it can recreate critical infrastructure containers.
 - `DOCKER_API_VERSION=1.40` is required in this environment.
 - `WATCHTOWER_ROLLING_RESTART=false` is required with the current qBittorrent/Gluetun dependency pattern.
-- Label-based opt-in automatic updates are still the preferred future state, but should be implemented as a separate change with backups and rollback steps.
+- Label-based opt-in is safer than broad automatic scanning because eligibility is explicit in each service's Compose definition.
+- A container label does not activate opt-in mode by itself; `WATCHTOWER_LABEL_ENABLE=true` must also be set on Watchtower.
+- The Watchtower log line `Only checking containers using enable label` is the clearest operational confirmation that opt-in mode is active.
