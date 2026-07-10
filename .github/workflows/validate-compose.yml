@@ -1,0 +1,31 @@
+name: Validate Docker Compose stacks
+
+on:
+  push:
+    paths:
+      - 'docker/**'
+      - 'scripts/validate-compose.sh'
+      - '.github/workflows/validate-compose.yml'
+  pull_request:
+    paths:
+      - 'docker/**'
+      - 'scripts/validate-compose.sh'
+      - '.github/workflows/validate-compose.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Docker Compose version
+        run: docker compose version
+
+      - name: Validate stack repository
+        run: bash scripts/validate-compose.sh
