@@ -6,6 +6,7 @@ Documentation and version-controlled infrastructure definitions for my homelab, 
 
 - [`DASHBOARD.md`](DASHBOARD.md) - current priority, project queue, completed work, and follow-ups
 - [`docker/README.md`](docker/README.md) - complete Docker stack index and deployment workflow
+- [`diagnostics/README.md`](diagnostics/README.md) - reusable, read-only troubleshooting reports
 - [`architecture/homelab-dependency-map.md`](architecture/homelab-dependency-map.md) - visual service, networking, and operations map
 - [`ai/open-webui-homelab-context.md`](ai/open-webui-homelab-context.md) - safe plan for using this repository as Open WebUI knowledge
 
@@ -21,6 +22,7 @@ Documentation and version-controlled infrastructure definitions for my homelab, 
 DASHBOARD.md      Current project priorities and status
 architecture/     Dependency maps and system-level design
 ai/               Local-AI context, RAG, and integration guidance
+diagnostics/      Read-only Docker and service troubleshooting reports
 docker/           Version-controlled Compose stacks and stack READMEs
 services/         Individual service documentation
 networking/       DNS, Docker networking, UniFi, Tailscale
@@ -64,6 +66,7 @@ changes/          Dated infrastructure change notes
 - UniFi networking
 - Tailscale remote access
 - Automated Compose repository validation through GitHub Actions
+- Reusable diagnostics for Docker health, Compose projects, networks, Watchtower, and qBittorrent/Gluetun
 
 ## Infrastructure-as-Code Workflow
 
@@ -82,6 +85,13 @@ Each Docker stack lives under `docker/<stack-name>/` with:
 Real `.env` files and credentials are excluded from Git.
 
 ## Recent Infrastructure Work
+
+### Diagnostics Toolkit - 2026-07-10
+
+- Added reusable, read-only shell reports under `diagnostics/`.
+- Standardized Docker health, Compose inventory, and network summaries.
+- Added focused Watchtower and qBittorrent/Gluetun reports.
+- Limited log output so reports remain practical to paste into troubleshooting sessions.
 
 ### Compose Source-of-Truth Project - 2026-07-10
 
