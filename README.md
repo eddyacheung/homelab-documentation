@@ -1,14 +1,17 @@
 # Homelab Documentation
 
-Documentation for my homelab, Linux administration, Docker infrastructure, networking, and self-hosted services.
+Documentation and version-controlled infrastructure definitions for my homelab, Linux administration, Docker environment, networking, and self-hosted services.
 
-## Project Dashboard
+## Quick Navigation
 
-See [`DASHBOARD.md`](DASHBOARD.md) for the current priority, upcoming work, completed projects, and maintenance follow-ups.
+- [`DASHBOARD.md`](DASHBOARD.md) - current priority, project queue, completed work, and follow-ups
+- [`docker/README.md`](docker/README.md) - complete Docker stack index and deployment workflow
+- [`architecture/homelab-dependency-map.md`](architecture/homelab-dependency-map.md) - visual service, networking, and operations map
+- [`ai/open-webui-homelab-context.md`](ai/open-webui-homelab-context.md) - safe plan for using this repository as Open WebUI knowledge
 
 ## Hardware
 
-- UGREEN DXP4800 Plus (64 GB RAM)
+- UGREEN DXP4800 Plus with 64 GB RAM
 - Windows desktop with NVIDIA RTX 4070
 - Raspberry Pi 4
 
@@ -16,14 +19,18 @@ See [`DASHBOARD.md`](DASHBOARD.md) for the current priority, upcoming work, comp
 
 ```text
 DASHBOARD.md      Current project priorities and status
+architecture/     Dependency maps and system-level design
+ai/               Local-AI context, RAG, and integration guidance
+docker/           Version-controlled Compose stacks and stack READMEs
 services/         Individual service documentation
 networking/       DNS, Docker networking, UniFi, Tailscale
 linux/            Linux administration notes and references
 windows/          Windows administration and PowerShell references
-docker/           Docker concepts and platform documentation
+scripts/          Repository validation and operational helpers
 standards/        Change management and operational standards
 troubleshooting/  Recovery guides and troubleshooting notes
 changes/          Dated infrastructure change notes
+.github/          Automated repository quality checks
 ```
 
 ## Core Services
@@ -43,20 +50,47 @@ changes/          Dated infrastructure change notes
 - Nginx Proxy Manager
 - Cloudflare Tunnel
 - Recyclarr
+- Unpackerr
 - Uptime Kuma
-- Homarr
+- Homebridge
 
 ## Current Infrastructure
 
-- Docker Compose
-- Portainer stack management
-- Pi-hole + Unbound recursive DNS
+- Docker Compose definitions stored in Git
+- Portainer stack deployment and management
+- Pi-hole with Unbound recursive DNS
 - Nginx Proxy Manager reverse proxy
 - Cloudflare Tunnel and Zero Trust access
 - UniFi networking
 - Tailscale remote access
+- Automated Compose repository validation through GitHub Actions
+
+## Infrastructure-as-Code Workflow
+
+The intended change flow is:
+
+```text
+Git repository -> review and validation -> Portainer deployment -> live verification -> documentation update
+```
+
+Each Docker stack lives under `docker/<stack-name>/` with:
+
+- `docker-compose.yml`
+- `README.md`
+- `.env.example` when variables or secrets are required
+
+Real `.env` files and credentials are excluded from Git.
 
 ## Recent Infrastructure Work
+
+### Compose Source-of-Truth Project - 2026-07-10
+
+- Exported and sanitized 17 Docker Compose stacks.
+- Added `.env.example` files for secret-bearing stacks.
+- Added a self-contained README to every stack directory.
+- Added a Docker stack index and dependency diagrams.
+- Added automated validation for Compose syntax, README coverage, and environment-variable examples.
+- Added guidance for ingesting the repository into Open WebUI as a safe knowledge source.
 
 ### Recyclarr Completion - 2026-07-10
 
@@ -64,50 +98,26 @@ changes/          Dated infrastructure change notes
 - Applied the official `UHD Bluray + WEB` Radarr profile.
 - Applied the official `WEB-2160p` Sonarr profile.
 - Confirmed custom formats, quality definitions, and profiles are current.
-- Verified the daily `@daily` scheduled sync succeeds.
-- Moved the unused placeholder `remux-2160p-combined.yml` configuration to `configs-disabled`.
-
-Detailed notes:
-
-```text
-services/recyclarr.md
-```
+- Verified the daily scheduled synchronization succeeds.
+- Moved the unused placeholder configuration to `configs-disabled`.
 
 ### Portainer Stack Cleanup - 2026-07-08
 
-Completed cleanup and standardization for several Docker stacks:
-
-- Migrated qBittorrent and Gluetun from legacy stack `38` to a Portainer-managed `qbittorrent` stack.
-- Reattached Gluetun to `media-net` and restored Radarr/Sonarr/Prowlarr access through `gluetun:8888`.
-- Converted Watchtower back to a Portainer-managed stack and fixed Docker API compatibility with `DOCKER_API_VERSION=1.40`.
-- Disabled Watchtower rolling restarts because they are incompatible with the qBittorrent/Gluetun dependency model.
-- Renamed the Plex stack/project from `plexnew` to `plex` while preserving the existing Plex container, config, and libraries.
-- Backed up Portainer before testing self-management cleanup, then left it running from the host-side Compose file because full self-management was not worth the added risk.
-
-Detailed notes:
-
-```text
-changes/2026-07-08-portainer-stack-cleanup.md
-```
+- Migrated qBittorrent and Gluetun into a Portainer-managed stack.
+- Reattached Gluetun to `media-net` and restored dependent service access.
+- Restored Watchtower as a Portainer-managed stack.
+- Fixed Docker API compatibility and disabled incompatible rolling restarts.
+- Standardized the Plex stack name while preserving its data and libraries.
 
 ## Active Projects
 
-The actively maintained list now lives in [`DASHBOARD.md`](DASHBOARD.md).
+The actively maintained list lives in [`DASHBOARD.md`](DASHBOARD.md).
 
-Current next project: **Deploy Unpackerr**.
-
-## Networking Documentation
-
-- Docker networking
-- Pi-hole
-- UniFi Network
-- Tailscale
-- Nginx Proxy Manager
-- Cloudflare Zero Trust
+Current next project: **Home Assistant with Apple Home integration**.
 
 ## Current Learning Goals
 
-- Linux Administration
+- Linux administration
 - Docker and Docker Compose
 - Git and GitHub
 - Python
@@ -115,7 +125,7 @@ Current next project: **Deploy Unpackerr**.
 - Canonical MAAS
 - Cloudflare Tunnel
 - SearXNG
-- Retrieval-Augmented Generation (RAG)
+- Retrieval-Augmented Generation
 
 ## Documentation Philosophy
 
@@ -127,4 +137,4 @@ Every significant infrastructure change should include:
 4. Documentation
 5. Git commit
 
-The goal is to keep this repository synchronized with the actual state of the homelab so it serves as both documentation and an operational knowledge base.
+The goal is to keep this repository synchronized with the actual homelab so it functions as documentation, a recovery kit, and an operational knowledge base.
