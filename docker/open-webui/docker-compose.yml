@@ -1,0 +1,19 @@
+﻿services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    environment:
+      - OLLAMA_BASE_URL=http://192.168.10.100:11434
+    volumes:
+      - /volume1/docker/open-webui:/app/backend/data
+    ports:
+      - 3002:8080
+    restart: unless-stopped
+    networks:
+      - ai-net
+
+networks:
+  ai-net:
+    external: true

@@ -1,0 +1,20 @@
+﻿services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    labels:
+      - com.centurylinklabs.watchtower.enable=true   
+    restart: unless-stopped
+
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    
+    command: tunnel --no-autoupdate run --token ${CF_TUNNEL_TOKEN}
+
+    networks:
+      - media-net
+
+networks:
+  media-net:
+    external: true

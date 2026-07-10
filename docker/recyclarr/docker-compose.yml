@@ -1,0 +1,16 @@
+﻿services:
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr:8
+    container_name: recyclarr
+    user: 1000:1000
+    restart: unless-stopped
+    environment:
+      - TZ=America/Chicago
+    volumes:
+      - /volume1/docker/recyclarr/config:/config
+    networks:
+      - media-net
+
+networks:
+  media-net:
+    external: true

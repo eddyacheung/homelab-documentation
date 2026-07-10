@@ -1,0 +1,23 @@
+﻿---
+services:
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      TZ: America/Chicago
+      PGID: 10
+      PUID: 1001
+    volumes:
+      - /volume1/docker/prowlarr/config:/config
+      - /volume2/Media/downloads:/downloads:rw
+      - /volume2/Media/tv:/tv:rw
+      - /volume2/Media/movies:/movies:rw
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+    networks:
+      - media-net
+
+networks:
+  media-net:
+    external: true

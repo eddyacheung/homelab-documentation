@@ -1,0 +1,25 @@
+﻿services:
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    hostname: pihole
+
+    environment:
+      TZ: America/Chicago
+      WEBPASSWORD: ${PIHOLE_WEBPASSWORD}
+      FTLCONF_LOCAL_IPV4: 192.168.10.250
+      DNSMASQ_LISTENING: all
+
+    volumes:
+      - /volume1/docker/pihole/etc-pihole:/etc/pihole
+      - /volume1/docker/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+
+    networks:
+      pihole_macvlan:
+        ipv4_address: 192.168.10.250
+
+    restart: unless-stopped
+
+networks:
+  pihole_macvlan:
+    external: true

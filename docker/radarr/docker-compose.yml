@@ -1,0 +1,24 @@
+﻿services:
+ radarr:
+    image: ghcr.io/linuxserver/radarr:latest
+    container_name: radarr
+    healthcheck:
+     test: curl -f http://localhost:7878/ || exit 1
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /volume1/docker/radarr/config:/config:rw 
+      - /volume2/Media:/data:rw
+    environment:
+      TZ: America/Chicago
+      PGID: 10
+      PUID: 1001
+    ports:
+      - 7878:7878
+    networks:
+      - media-net
+
+networks:
+  media-net:
+    external: true

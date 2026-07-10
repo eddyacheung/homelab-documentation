@@ -1,0 +1,16 @@
+﻿services:
+  unbound:
+    image: mvance/unbound:latest
+    container_name: unbound
+    restart: unless-stopped
+    networks:
+      - media-net
+    healthcheck:
+      test: ["CMD", "drill", "@127.0.0.1", "cloudflare.com"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  media-net:
+    external: true

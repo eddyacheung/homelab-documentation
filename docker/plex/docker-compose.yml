@@ -1,0 +1,24 @@
+﻿services:
+  plex:
+    image: ghcr.io/linuxserver/plex:latest
+    container_name: plex
+    hostname: plex
+    network_mode: host
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:32400/web || exit 1"]
+    volumes:
+      - /volume1/docker/plexhw:/config:rw
+      - /volume1/docker/plexhw/transcode:/transcode:rw
+      - /volume2/Media:/media:ro
+    devices:
+      - /dev/dri:/dev/dri
+    environment:
+      TZ: America/Chicago
+      PUID: 1001
+      PGID: 10
+      UMASK: 022
+      VERSION: public
+      TRANSCODE_DIR: /transcode
+    restart: unless-stopped

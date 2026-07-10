@@ -1,0 +1,21 @@
+﻿services:
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "8181:81"
+      - "443:443"
+    networks:
+      - media-net
+      - nginx-proxy-manager_default
+    volumes:
+      - /volume1/docker/nginx-proxy-manager/data:/data
+      - /volume1/docker/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
+
+networks:
+  media-net:
+    external: true
+  nginx-proxy-manager_default:
+    external: true

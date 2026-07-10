@@ -1,0 +1,39 @@
+﻿services:
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    hostname: watchtower
+
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    read_only: true
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    environment:
+      TZ: America/Chicago
+
+      # Docker compatibility
+      DOCKER_API_VERSION: "1.40"
+
+      # Cleanup
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_REMOVE_VOLUMES: "false"
+
+      # Schedule (every day at noon)
+      WATCHTOWER_SCHEDULE: "0 0 12 * * *"
+
+      # Update behavior
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_INCLUDE_STOPPED: "false"
+      WATCHTOWER_INCLUDE_RESTARTING: "true"
+
+      # Rolling restart doesn't work with Gluetun network_mode containers
+      WATCHTOWER_ROLLING_RESTART: "false"
+
+      WATCHTOWER_TIMEOUT: "30s"
+      WATCHTOWER_LOG_FORMAT: "pretty"
