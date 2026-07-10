@@ -6,62 +6,89 @@ This file is the quick-glance source of truth for active homelab work. Update it
 
 ## Current Priority
 
-### 1. Deploy Unpackerr
+### 1. Home Assistant with Apple Home integration
 
 **Status:** Next up
 
-Goal: Automatically extract archived downloads so Radarr and Sonarr can import them without manual intervention.
+Goal: Deploy Home Assistant in a maintainable way and integrate compatible devices with Apple Home.
 
 Planned work:
 
-- Review qBittorrent, Radarr, and Sonarr paths and categories.
-- Deploy Unpackerr through Portainer as a Docker Compose stack.
-- Connect Unpackerr to Radarr and Sonarr.
-- Confirm archive extraction and cleanup behavior.
-- Add service documentation and validation commands.
+- Review deployment choices and select the best fit for the UGREEN NAS.
+- Deploy through Portainer when practical.
+- Configure persistent storage and backups.
+- Add Apple Home integration.
+- Validate device discovery and remote behavior.
+- Document deployment, recovery, and update procedures.
 
 ## Near-Term Queue
 
-### 2. Watchtower label-based updates
+### 2. RAG document library for local AI
 
 **Status:** Planned
 
-- Convert from broad automatic updates to explicit opt-in labels.
-- Keep stateful and critical services excluded.
-- Define a weekly maintenance window.
-- Add cleanup and notification behavior.
-- Update the Watchtower documentation.
+- Make the homelab documentation searchable from Open WebUI.
+- Define a reliable ingestion and refresh workflow.
+- Test answers against known service and troubleshooting notes.
+- Prevent secrets and sensitive configuration from entering the knowledge base.
 
-### 3. Ansible control node on the UGREEN NAS
+### 3. SearXNG integration with Open WebUI
 
 **Status:** Planned
 
+- Deploy a private metasearch service.
+- Connect it to Open WebUI for current web research.
+- Tune search engines, networking, and privacy settings.
+- Document validation and recovery procedures.
+
+### 4. Reusable PowerShell and shell diagnostic helpers
+
+**Status:** Planned
+
+- Simplify remote Docker inspection from Windows.
+- Collect status, environment, labels, mounts, networks, and logs.
+- Save output into local review files without PowerShell quoting problems.
+- Store reusable scripts in Git.
+
+### 5. Plex remote-access design
+
+**Status:** Planned
+
+- Review options that avoid unnecessary public exposure.
+- Preserve convenient access for shared Plex users.
+- Document security and availability tradeoffs.
+
+### 6. Ansible automation lab
+
+**Status:** Planned, second to last
+
+- Configure the UGREEN NAS as an Ansible control node.
 - Create a Git-backed Ansible repository.
 - Configure inventory and `ansible.cfg`.
 - Establish SSH key authentication.
-- Build initial Linux and Docker playbooks.
-- Document the control-node workflow.
+- Prepare the Raspberry Pi as an Ansible managed host.
+- Build and validate initial Linux and Docker playbooks.
+- Document the complete control-node and managed-host workflow.
 
-### 4. Raspberry Pi Ansible managed host
+### 7. MAAS deployment lab
 
-**Status:** Planned
+**Status:** Planned, last
 
-- Prepare and harden the Raspberry Pi.
-- Configure SSH access.
-- Add it to the Ansible inventory.
-- Validate initial playbooks.
-
-## Later Projects
-
-- [ ] Home Assistant with Apple Home integration
-- [ ] SearXNG integration with Open WebUI
-- [ ] RAG document library for local AI
-- [ ] MAAS deployment lab
-- [ ] Reusable PowerShell and shell diagnostic helpers
-- [ ] Plex remote-access design without unnecessary public exposure
+- Design a small physical provisioning lab.
+- Identify suitable controller and managed hardware.
+- Document networking, DHCP, imaging, and rollback requirements.
 
 ## Completed Projects
 
+- [x] Watchtower label-based opt-in updates
+  - `WATCHTOWER_LABEL_ENABLE=true` verified live
+  - Startup logs confirm `Only checking containers using enable label`
+  - Cloudflared received the missing opt-in label
+  - Broad automatic scanning is no longer active
+- [x] Unpackerr deployment and integration
+  - Connected to the media automation workflow
+  - Service deployment and configuration completed
+  - First live archived-download extraction remains a natural operational follow-up because no suitable archive was available during deployment
 - [x] Recyclarr deployment and configuration
   - Radarr profile: `UHD Bluray + WEB`
   - Sonarr profile: `WEB-2160p`
@@ -79,10 +106,12 @@ Planned work:
 
 ## Maintenance and Follow-Up
 
+- [ ] Validate Unpackerr against the next naturally occurring archived download.
 - [ ] Confirm all service documentation matches the live Portainer stacks.
 - [ ] Review backup coverage for stateful container data.
 - [ ] Add maintenance windows to Uptime Kuma for planned updates.
 - [ ] Periodically verify qBittorrent and Gluetun recovery behavior.
+- [ ] Review Watchtower logs after scheduled runs and confirm only opted-in containers are scanned.
 - [ ] Keep this dashboard updated at the end of each project session.
 
 ## Project Workflow
