@@ -6,29 +6,13 @@ This file is the quick-glance source of truth for active homelab work. Update it
 
 ## Current Priority
 
-### 1. Version-control all Docker Compose stacks
+### 1. Home Assistant with Apple Home integration
 
-**Status:** In progress
+**Status:** Next up
 
-Goal: Store a sanitized, recoverable Compose definition for every Portainer-managed stack in Git so the repository becomes the deployment and disaster-recovery source of truth.
+Goal: Deploy Home Assistant in a maintainable way and integrate compatible devices with Apple Home.
 
 Planned work:
-
-- Inventory every live Portainer stack and its Compose source.
-- Export the current Compose files from Portainer.
-- Organize stacks under a consistent `docker/<stack-name>/docker-compose.yml` structure.
-- Identify embedded passwords, API keys, tokens, and other secrets before committing.
-- Replace committed secrets with environment-variable references and add `.env.example` files where needed.
-- Add or verify `.gitignore` coverage for real `.env` files and other sensitive material.
-- Validate each sanitized Compose file against the live stack.
-- Link service documentation to its corresponding Compose file.
-- Document a repeatable export, review, and future automation workflow.
-
-## Near-Term Queue
-
-### 2. Home Assistant with Apple Home integration
-
-**Status:** Planned
 
 - Review deployment choices and select the best fit for the UGREEN NAS.
 - Deploy through Portainer when practical.
@@ -37,16 +21,19 @@ Planned work:
 - Validate device discovery and remote behavior.
 - Document deployment, recovery, and update procedures.
 
-### 3. RAG document library for local AI
+## Near-Term Queue
 
-**Status:** Planned
+### 2. RAG document library for local AI
 
+**Status:** Planned, groundwork documented
+
+- Use `ai/open-webui-homelab-context.md` as the ingestion and evaluation plan.
 - Make the homelab documentation searchable from Open WebUI.
 - Define a reliable ingestion and refresh workflow.
 - Test answers against known service and troubleshooting notes.
 - Prevent secrets and sensitive configuration from entering the knowledge base.
 
-### 4. SearXNG integration with Open WebUI
+### 3. SearXNG integration with Open WebUI
 
 **Status:** Planned
 
@@ -55,7 +42,7 @@ Planned work:
 - Tune search engines, networking, and privacy settings.
 - Document validation and recovery procedures.
 
-### 5. Reusable PowerShell and shell diagnostic helpers
+### 4. Reusable PowerShell and shell diagnostic helpers
 
 **Status:** Planned
 
@@ -64,7 +51,7 @@ Planned work:
 - Save output into local review files without PowerShell quoting problems.
 - Store reusable scripts in Git.
 
-### 6. Plex remote-access design
+### 5. Plex remote-access design
 
 **Status:** Planned
 
@@ -72,7 +59,7 @@ Planned work:
 - Preserve convenient access for shared Plex users.
 - Document security and availability tradeoffs.
 
-### 7. Ansible automation lab
+### 6. Ansible automation lab
 
 **Status:** Planned, second to last
 
@@ -84,7 +71,7 @@ Planned work:
 - Build and validate initial Linux and Docker playbooks.
 - Document the complete control-node and managed-host workflow.
 
-### 8. MAAS deployment lab
+### 7. MAAS deployment lab
 
 **Status:** Planned, last
 
@@ -94,6 +81,15 @@ Planned work:
 
 ## Completed Projects
 
+- [x] Version-control all Docker Compose stacks
+  - Exported and sanitized 17 live stack definitions
+  - Stored each stack under `docker/<stack-name>/docker-compose.yml`
+  - Added safe `.env.example` files for secret-bearing stacks
+  - Added a tailored README to every stack directory
+  - Added `docker/README.md` as the stack index and workflow guide
+  - Added Mermaid dependency maps under `architecture/`
+  - Added Open WebUI knowledge-ingestion guidance under `ai/`
+  - Added GitHub Actions validation for Compose syntax, stack READMEs, and variable examples
 - [x] Watchtower label-based opt-in updates
   - `WATCHTOWER_LABEL_ENABLE=true` verified live
   - Startup logs confirm `Only checking containers using enable label`
@@ -120,12 +116,14 @@ Planned work:
 
 ## Maintenance and Follow-Up
 
+- [ ] Confirm the first GitHub Actions Compose-validation run succeeds.
 - [ ] Validate Unpackerr against the next naturally occurring archived download.
 - [ ] Confirm all service documentation matches the live Portainer stacks.
 - [ ] Review backup coverage for stateful container data.
 - [ ] Add maintenance windows to Uptime Kuma for planned updates.
 - [ ] Periodically verify qBittorrent and Gluetun recovery behavior.
 - [ ] Review Watchtower logs after scheduled runs and confirm only opted-in containers are scanned.
+- [ ] Build automated Portainer-to-Git drift detection after the manual source-of-truth workflow has matured.
 - [ ] Keep this dashboard updated at the end of each project session.
 
 ## Project Workflow
