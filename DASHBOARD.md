@@ -23,7 +23,29 @@ Planned work:
 
 ## Near-Term Queue
 
-### 2. RAG document library for local AI
+### 2. Homelab PowerShell Toolkit
+
+**Status:** Planned
+
+Goal: Provide one-command Windows-native diagnostics and repository helpers without cloning the Git repository onto the NAS.
+
+Design principle:
+
+- Windows remains the primary workstation and local Git checkout.
+- GitHub remains the source of truth.
+- The UGREEN NAS remains the Docker execution environment.
+- Avoid extra synchronization steps unless they provide clear operational value.
+
+Planned work:
+
+- Add PowerShell wrappers around SSH-based Docker diagnostics.
+- Create simple commands for Watchtower, qBittorrent/Gluetun, Docker health, networks, and Compose inventory.
+- Normalize line endings and remote `sudo` handling automatically.
+- Save reports to local files when output is too large for the terminal or chat.
+- Add `homelab-health`, `homelab-report`, and `homelab-update` helpers.
+- Document installation, aliases, usage, and troubleshooting.
+
+### 3. RAG document library for local AI
 
 **Status:** Planned, groundwork documented
 
@@ -33,7 +55,7 @@ Planned work:
 - Test answers against known service and troubleshooting notes.
 - Prevent secrets and sensitive configuration from entering the knowledge base.
 
-### 3. SearXNG integration with Open WebUI
+### 4. SearXNG integration with Open WebUI
 
 **Status:** Planned
 
@@ -42,7 +64,7 @@ Planned work:
 - Tune search engines, networking, and privacy settings.
 - Document validation and recovery procedures.
 
-### 4. Plex remote-access design
+### 5. Plex remote-access design
 
 **Status:** Planned
 
@@ -50,7 +72,7 @@ Planned work:
 - Preserve convenient access for shared Plex users.
 - Document security and availability tradeoffs.
 
-### 5. Ansible automation lab
+### 6. Ansible automation lab
 
 **Status:** Planned, second to last
 
@@ -62,7 +84,7 @@ Planned work:
 - Build and validate initial Linux and Docker playbooks.
 - Document the complete control-node and managed-host workflow.
 
-### 6. MAAS deployment lab
+### 7. MAAS deployment lab
 
 **Status:** Planned, last
 
@@ -77,7 +99,7 @@ Planned work:
   - Added focused Watchtower and qBittorrent/Gluetun reports
   - Limited recent logs to keep troubleshooting output manageable
   - Added usage and design guidance under `diagnostics/README.md`
-  - PowerShell wrappers remain an optional future enhancement
+  - PowerShell wrappers are now tracked as the separate Homelab PowerShell Toolkit project
 - [x] Version-control all Docker Compose stacks
   - Exported and sanitized 17 live stack definitions
   - Stored each stack under `docker/<stack-name>/docker-compose.yml`
@@ -114,7 +136,6 @@ Planned work:
 ## Maintenance and Follow-Up
 
 - [ ] Confirm the first GitHub Actions Compose-validation run succeeds.
-- [ ] Add PowerShell wrappers for remote diagnostics if the shell scripts become part of regular troubleshooting.
 - [ ] Add Pi-hole/Unbound, Plex, and Cloudflare diagnostic reports as needed.
 - [ ] Validate Unpackerr against the next naturally occurring archived download.
 - [ ] Confirm all service documentation matches the live Portainer stacks.
