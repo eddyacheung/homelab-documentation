@@ -6,11 +6,20 @@ cd "$repo_root"
 
 failures=0
 stack_count=0
+compose_checks=0
 
 fail() {
   printf 'ERROR: %s\n' "$*" >&2
   failures=$((failures + 1))
 }
+
+if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+  compose_available=true
+else
+  compose_available=false
+  printf 'WARNING: Docker Compose CLI is unavailable; syntax rendering will be skipped locally.\n'
+  printf '         GitHub Actions will still perform the full Compose validation.\n\n'
+fi
 
 printf 'Checking for forbidden tracked secret files...\n'
 while IFS= read -r path; do
@@ -33,20 +42,22 @@ for compose in docker/*/docker-compose.yml; do
 
   [[ -f "$stack_dir/README.md" ]] || fail "$stack_name is missing README.md"
 
-  temp_env=""
-  if [[ -f "$stack_dir/.env.example" ]]; then
+  if [[ "$compose_available" == true ]]; then
     temp_env="$(mktemp)"
-    cp "$stack_dir/.env.example" "$temp_env"
-  else
-    temp_env="$(mktemp)"
-    : > "$temp_env"
-  fi
+    if [[ -f "$stack_dir/.env.example" ]]; then
+      cp "$stack_dir/.env.example" "$temp_env"
+    else
+      : > "$temp_env"
+    fi
 
-  if ! docker compose --env-file "$temp_env" -f "$compose" config --quiet; then
-    fail "$stack_name failed docker compose config"
-  fi
+    if ! docker compose --env-file "$temp_env" -f "$compose" config --quiet; then
+      fail "$stack_name failed docker compose config"
+    else
+      compose_checks=$((compose_checks + 1))
+    fi
 
-  rm -f "$temp_env"
+    rm -f "$temp_env"
+  fi
 done
 
 [[ "$stack_count" -gt 0 ]] || fail "No Docker Compose stacks were found"
@@ -80,4 +91,8 @@ if [[ "$failures" -ne 0 ]]; then
   exit 1
 fi
 
-printf '\nValidation passed for %d Docker stack(s).\n' "$stack_count"
+if [[ "$compose_available" == true ]]; then
+  printf '\nValidation passed for %d Docker stack(s); %d Compose files rendered successfully.\n' "$stack_count" "$compose_checks"
+else
+  printf '\nStatic validation passed for %d Docker stack(s). Compose rendering was skipped because Docker is unavailable.\n' "$stack_count"
+fi
