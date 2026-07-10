@@ -42,16 +42,7 @@ Planned work:
 - Tune search engines, networking, and privacy settings.
 - Document validation and recovery procedures.
 
-### 4. Reusable PowerShell and shell diagnostic helpers
-
-**Status:** Planned
-
-- Simplify remote Docker inspection from Windows.
-- Collect status, environment, labels, mounts, networks, and logs.
-- Save output into local review files without PowerShell quoting problems.
-- Store reusable scripts in Git.
-
-### 5. Plex remote-access design
+### 4. Plex remote-access design
 
 **Status:** Planned
 
@@ -59,7 +50,7 @@ Planned work:
 - Preserve convenient access for shared Plex users.
 - Document security and availability tradeoffs.
 
-### 6. Ansible automation lab
+### 5. Ansible automation lab
 
 **Status:** Planned, second to last
 
@@ -71,7 +62,7 @@ Planned work:
 - Build and validate initial Linux and Docker playbooks.
 - Document the complete control-node and managed-host workflow.
 
-### 7. MAAS deployment lab
+### 6. MAAS deployment lab
 
 **Status:** Planned, last
 
@@ -81,6 +72,12 @@ Planned work:
 
 ## Completed Projects
 
+- [x] Reusable shell diagnostics toolkit
+  - Added concise Docker health, Compose inventory, and network reports
+  - Added focused Watchtower and qBittorrent/Gluetun reports
+  - Limited recent logs to keep troubleshooting output manageable
+  - Added usage and design guidance under `diagnostics/README.md`
+  - PowerShell wrappers remain an optional future enhancement
 - [x] Version-control all Docker Compose stacks
   - Exported and sanitized 17 live stack definitions
   - Stored each stack under `docker/<stack-name>/docker-compose.yml`
@@ -117,6 +114,8 @@ Planned work:
 ## Maintenance and Follow-Up
 
 - [ ] Confirm the first GitHub Actions Compose-validation run succeeds.
+- [ ] Add PowerShell wrappers for remote diagnostics if the shell scripts become part of regular troubleshooting.
+- [ ] Add Pi-hole/Unbound, Plex, and Cloudflare diagnostic reports as needed.
 - [ ] Validate Unpackerr against the next naturally occurring archived download.
 - [ ] Confirm all service documentation matches the live Portainer stacks.
 - [ ] Review backup coverage for stateful container data.
