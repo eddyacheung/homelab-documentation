@@ -6,13 +6,29 @@ This file is the quick-glance source of truth for active homelab work. Update it
 
 ## Current Priority
 
-### 1. Home Assistant with Apple Home integration
+### 1. Version-control all Docker Compose stacks
 
-**Status:** Next up
+**Status:** In progress
 
-Goal: Deploy Home Assistant in a maintainable way and integrate compatible devices with Apple Home.
+Goal: Store a sanitized, recoverable Compose definition for every Portainer-managed stack in Git so the repository becomes the deployment and disaster-recovery source of truth.
 
 Planned work:
+
+- Inventory every live Portainer stack and its Compose source.
+- Export the current Compose files from Portainer.
+- Organize stacks under a consistent `docker/<stack-name>/docker-compose.yml` structure.
+- Identify embedded passwords, API keys, tokens, and other secrets before committing.
+- Replace committed secrets with environment-variable references and add `.env.example` files where needed.
+- Add or verify `.gitignore` coverage for real `.env` files and other sensitive material.
+- Validate each sanitized Compose file against the live stack.
+- Link service documentation to its corresponding Compose file.
+- Document a repeatable export, review, and future automation workflow.
+
+## Near-Term Queue
+
+### 2. Home Assistant with Apple Home integration
+
+**Status:** Planned
 
 - Review deployment choices and select the best fit for the UGREEN NAS.
 - Deploy through Portainer when practical.
@@ -21,9 +37,7 @@ Planned work:
 - Validate device discovery and remote behavior.
 - Document deployment, recovery, and update procedures.
 
-## Near-Term Queue
-
-### 2. RAG document library for local AI
+### 3. RAG document library for local AI
 
 **Status:** Planned
 
@@ -32,7 +46,7 @@ Planned work:
 - Test answers against known service and troubleshooting notes.
 - Prevent secrets and sensitive configuration from entering the knowledge base.
 
-### 3. SearXNG integration with Open WebUI
+### 4. SearXNG integration with Open WebUI
 
 **Status:** Planned
 
@@ -41,7 +55,7 @@ Planned work:
 - Tune search engines, networking, and privacy settings.
 - Document validation and recovery procedures.
 
-### 4. Reusable PowerShell and shell diagnostic helpers
+### 5. Reusable PowerShell and shell diagnostic helpers
 
 **Status:** Planned
 
@@ -50,7 +64,7 @@ Planned work:
 - Save output into local review files without PowerShell quoting problems.
 - Store reusable scripts in Git.
 
-### 5. Plex remote-access design
+### 6. Plex remote-access design
 
 **Status:** Planned
 
@@ -58,7 +72,7 @@ Planned work:
 - Preserve convenient access for shared Plex users.
 - Document security and availability tradeoffs.
 
-### 6. Ansible automation lab
+### 7. Ansible automation lab
 
 **Status:** Planned, second to last
 
@@ -70,7 +84,7 @@ Planned work:
 - Build and validate initial Linux and Docker playbooks.
 - Document the complete control-node and managed-host workflow.
 
-### 7. MAAS deployment lab
+### 8. MAAS deployment lab
 
 **Status:** Planned, last
 
