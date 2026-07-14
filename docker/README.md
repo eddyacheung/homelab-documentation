@@ -20,6 +20,8 @@ Real `.env` files and secrets must never be committed.
 | Stack | Purpose | Primary access | Network | Detailed documentation |
 | --- | --- | --- | --- | --- |
 | [cloudflared](cloudflared/) | Cloudflare Tunnel connector | No local UI | `media-net` | [Cloudflare Zero Trust](../networking/cloudflare-zero-trust.md) |
+| [eufy-security-ws](eufy-security-ws/) | Eufy websocket backend for Home Assistant | `127.0.0.1:3000` | Default bridge with loopback-only published port | [Eufy camera integration](../services/home-assistant-eufy-cameras.md) |
+| [go2rtc](go2rtc/) | Low-latency camera stream relay | Host-local services | Host | [Eufy camera integration](../services/home-assistant-eufy-cameras.md) |
 | [homebridge](homebridge/) | Apple Home bridge | `http://NAS-IP:8581` | Host | [Homebridge stack](homebridge/README.md) |
 | [nginx-proxy-manager](nginx-proxy-manager/) | Reverse proxy and certificates | `http://NAS-IP:8181` | `media-net` | [Nginx Proxy Manager](../services/nginx-proxy-manager.md) |
 | [open-webui](open-webui/) | Local AI chat interface | `http://NAS-IP:3002` | `ai-net` | [Open WebUI](../services/open-webui.md) |
