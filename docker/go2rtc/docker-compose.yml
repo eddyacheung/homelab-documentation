@@ -1,0 +1,16 @@
+services:
+  go2rtc:
+    image: alexxit/go2rtc:latest
+    container_name: go2rtc
+    restart: unless-stopped
+
+    network_mode: host
+
+    volumes:
+      - /volume1/docker/go2rtc/config:/config
+
+    environment:
+      TZ: America/Chicago
+
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
