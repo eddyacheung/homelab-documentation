@@ -1,6 +1,6 @@
 # Homelab Project Dashboard
 
-> Last updated: 2026-07-13
+> Last updated: 2026-07-14
 
 This file is the quick-glance source of truth for active homelab work. Update it whenever a project starts, changes priority, becomes blocked, or is completed.
 
@@ -33,7 +33,33 @@ Planned work:
 
 ## Near-Term Queue
 
-### 2. Homelab PowerShell Toolkit
+### 2. TeslaMate self-hosted vehicle analytics
+
+**Status:** Planned
+
+Goal: Deploy TeslaMate for private, self-hosted Tesla charging, efficiency, and driving-history analytics while minimizing vehicle-control and location-data exposure.
+
+Security requirements:
+
+- Keep TeslaMate and Grafana accessible only from the LAN or through Tailscale.
+- Do not publish TeslaMate through a public Cloudflare hostname.
+- Use a dedicated Docker network rather than attaching the stack to `media-net`.
+- Keep Tesla tokens, database credentials, and the TeslaMate encryption key outside Git.
+- Do not install a Tesla virtual key unless a later requirement clearly justifies vehicle-command access.
+- Encrypt PostgreSQL backups and limit retention because the database contains detailed location history.
+- Avoid unattended PostgreSQL major-version upgrades and document the backup, upgrade, validation, and rollback process.
+
+Planned work:
+
+- Confirm the currently supported TeslaMate authentication method for a personal Tesla account.
+- Design a Portainer stack for TeslaMate, PostgreSQL, Grafana, and any required MQTT components.
+- Restrict published ports and verify that PostgreSQL and MQTT are not exposed unnecessarily.
+- Deploy with unique generated secrets and sanitized `.env.example` documentation.
+- Validate charging-session history, energy-added data, vehicle sleep behavior, and dashboard access.
+- Add Home Assistant integration only for useful read-only sensors after the base deployment is stable.
+- Document token revocation, backup recovery, upgrades, and complete removal.
+
+### 3. Homelab PowerShell Toolkit
 
 **Status:** Planned
 
@@ -55,7 +81,7 @@ Planned work:
 - Add `homelab-health`, `homelab-report`, and `homelab-update` helpers.
 - Document installation, aliases, usage, and troubleshooting.
 
-### 3. RAG document library for local AI
+### 4. RAG document library for local AI
 
 **Status:** Planned, groundwork documented
 
@@ -65,7 +91,7 @@ Planned work:
 - Test answers against known service and troubleshooting notes.
 - Prevent secrets and sensitive configuration from entering the knowledge base.
 
-### 4. SearXNG integration with Open WebUI
+### 5. SearXNG integration with Open WebUI
 
 **Status:** Planned
 
@@ -74,7 +100,7 @@ Planned work:
 - Tune search engines, networking, and privacy settings.
 - Document validation and recovery procedures.
 
-### 5. Plex remote-access design
+### 6. Plex remote-access design
 
 **Status:** Planned
 
@@ -82,7 +108,7 @@ Planned work:
 - Preserve convenient access for shared Plex users.
 - Document security and availability tradeoffs.
 
-### 6. Ansible automation lab
+### 7. Ansible automation lab
 
 **Status:** Planned, second to last
 
@@ -94,7 +120,7 @@ Planned work:
 - Build and validate initial Linux and Docker playbooks.
 - Document the complete control-node and managed-host workflow.
 
-### 7. MAAS deployment lab
+### 8. MAAS deployment lab
 
 **Status:** Planned, last
 
