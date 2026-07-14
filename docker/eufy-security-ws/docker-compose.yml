@@ -1,0 +1,21 @@
+services:
+  eufy-security-ws:
+    image: bropat/eufy-security-ws:latest
+    container_name: eufy-security-ws
+    restart: unless-stopped
+
+    environment:
+      USERNAME: "${EUFY_USERNAME}"
+      PASSWORD: "${EUFY_PASSWORD}"
+      COUNTRY: "${EUFY_COUNTRY}"
+      LANGUAGE: "${EUFY_LANGUAGE}"
+      PERSISTENT: "${EUFY_PERSISTENT}"
+
+    volumes:
+      - /volume1/docker/eufy-security-ws/data:/data
+
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
