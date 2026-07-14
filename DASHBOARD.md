@@ -1,25 +1,35 @@
 # Homelab Project Dashboard
 
-> Last updated: 2026-07-10
+> Last updated: 2026-07-13
 
 This file is the quick-glance source of truth for active homelab work. Update it whenever a project starts, changes priority, becomes blocked, or is completed.
 
 ## Current Priority
 
-### 1. Home Assistant with Apple Home integration
+### 1. Home Presence and Security Automation
 
-**Status:** Next up
+**Status:** Planned, next up
 
-Goal: Deploy Home Assistant in a maintainable way and integrate compatible devices with Apple Home.
+Goal: Use Home Assistant as the source of truth for occupancy and automatically apply the desired Eufy security behavior without sacrificing fast Apple Home live viewing.
+
+Desired behavior:
+
+- Keep the Eufy Indoor Cam E30 cameras online while home.
+- Disable recording, notifications, and alarms while home.
+- Preserve immediate Apple Home live viewing for checking the dogs.
+- Enable recording, motion/person detection, and notifications when away.
+- Remove the need to open the Eufy app for routine Home/Away changes.
 
 Planned work:
 
-- Review deployment choices and select the best fit for the UGREEN NAS.
-- Deploy through Portainer when practical.
-- Configure persistent storage and backups.
-- Add Apple Home integration.
-- Validate device discovery and remote behavior.
-- Document deployment, recovery, and update procedures.
+- Validate Home Assistant phone presence and home-zone behavior.
+- Define an explicit Home/Away helper or household occupancy state.
+- Confirm which Eufy security-mode controls are exposed to Home Assistant.
+- Build arrival and departure automations with conservative delays.
+- Add manual override and failure-safe controls.
+- Validate indoor-camera recording and notification behavior in both modes.
+- Preserve Homebridge as the Apple Home camera bridge unless a replacement matches its approximately two-second stream startup.
+- Document implementation, rollback, and troubleshooting.
 
 ## Near-Term Queue
 
@@ -94,6 +104,17 @@ Planned work:
 
 ## Completed Projects
 
+- [x] Home Assistant with Apple Home camera integration evaluation
+  - Deployed and validated Home Assistant Container with host networking
+  - Integrated Eufy cameras through `eufy-security-ws`
+  - Deployed and validated `go2rtc` and WebRTC Camera
+  - Built a Home Assistant camera dashboard and verified live Backyard streaming
+  - Exported and paired standalone HomeKit camera accessories
+  - Documented the disable/re-enable method for regenerating HomeKit QR-code notifications
+  - Compared Apple Home performance against Homebridge
+  - Retained Homebridge for Eufy Apple Home streaming because it loaded in approximately two seconds and outperformed the Home Assistant export
+  - Retained Home Assistant camera entities for dashboards, detection entities, and future automation
+  - See `services/home-assistant-eufy-cameras.md`
 - [x] Reusable shell diagnostics toolkit
   - Added concise Docker health, Compose inventory, and network reports
   - Added focused Watchtower and qBittorrent/Gluetun reports
@@ -135,6 +156,9 @@ Planned work:
 
 ## Maintenance and Follow-Up
 
+- [ ] Restore or confirm the Homebridge Eufy plugin after the Home Assistant HomeKit comparison.
+- [ ] Remove obsolete Home Assistant camera accessories from Apple Home and disable/delete their accessory-mode HomeKit entries.
+- [ ] Confirm Home Assistant WebRTC dashboard streams remain functional after Apple Home cleanup.
 - [ ] Confirm the first GitHub Actions Compose-validation run succeeds.
 - [ ] Add Pi-hole/Unbound, Plex, and Cloudflare diagnostic reports as needed.
 - [ ] Validate Unpackerr against the next naturally occurring archived download.
