@@ -9,6 +9,7 @@ Documentation and version-controlled infrastructure definitions for my homelab, 
 - [`diagnostics/README.md`](diagnostics/README.md) - reusable, read-only troubleshooting reports
 - [`architecture/homelab-dependency-map.md`](architecture/homelab-dependency-map.md) - visual service, networking, and operations map
 - [`ai/open-webui-homelab-context.md`](ai/open-webui-homelab-context.md) - safe plan for using this repository as Open WebUI knowledge
+- [`services/home-assistant-eufy-cameras.md`](services/home-assistant-eufy-cameras.md) - Eufy camera integration, HomeKit evaluation, and architecture decision
 
 ## Hardware
 
@@ -55,6 +56,9 @@ changes/          Dated infrastructure change notes
 - Unpackerr
 - Uptime Kuma
 - Homebridge
+- Home Assistant
+- go2rtc
+- eufy-security-ws
 
 ## Current Infrastructure
 
@@ -65,6 +69,8 @@ changes/          Dated infrastructure change notes
 - Cloudflare Tunnel and Zero Trust access
 - UniFi networking
 - Tailscale remote access
+- Home Assistant camera entities and WebRTC dashboards
+- Homebridge camera export to Apple Home
 - Automated Compose repository validation through GitHub Actions
 - Reusable diagnostics for Docker health, Compose projects, networks, Watchtower, and qBittorrent/Gluetun
 
@@ -85,6 +91,15 @@ Each Docker stack lives under `docker/<stack-name>/` with:
 Real `.env` files and credentials are excluded from Git.
 
 ## Recent Infrastructure Work
+
+### Home Assistant and Eufy Camera Evaluation - 2026-07-13
+
+- Integrated Eufy cameras with Home Assistant through `eufy-security-ws` and `go2rtc`.
+- Built and validated a WebRTC camera dashboard.
+- Tested standalone HomeKit camera accessories exported by Home Assistant.
+- Documented the disable/re-enable method for regenerating missing HomeKit QR-code notifications.
+- Compared Apple Home performance and retained Homebridge for Eufy camera export because it delivered approximately two-second stream startup.
+- Added a Home Presence and Security Automation project for occupancy-driven camera behavior.
 
 ### Diagnostics Toolkit - 2026-07-10
 
@@ -123,7 +138,7 @@ Real `.env` files and credentials are excluded from Git.
 
 The actively maintained list lives in [`DASHBOARD.md`](DASHBOARD.md).
 
-Current next project: **Home Assistant with Apple Home integration**.
+Current next project: **Home Presence and Security Automation**.
 
 ## Current Learning Goals
 
