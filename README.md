@@ -10,6 +10,8 @@ Documentation and version-controlled infrastructure definitions for my homelab, 
 - [`architecture/homelab-dependency-map.md`](architecture/homelab-dependency-map.md) - visual service, networking, and operations map
 - [`ai/open-webui-homelab-context.md`](ai/open-webui-homelab-context.md) - safe plan for using this repository as Open WebUI knowledge
 - [`services/home-assistant-eufy-cameras.md`](services/home-assistant-eufy-cameras.md) - Eufy camera integration, HomeKit evaluation, and architecture decision
+- [`services/home-assistant-presence-security.md`](services/home-assistant-presence-security.md) - Companion App presence, Home/Away automations, and reusable Eufy scripts
+- [`services/home-assistant-apple-tv.md`](services/home-assistant-apple-tv.md) - Apple TV discovery, pairing diagnostics, security settings, and validation
 
 ## Hardware
 
@@ -71,6 +73,8 @@ changes/          Dated infrastructure change notes
 - Tailscale remote access
 - Home Assistant camera entities and WebRTC dashboards
 - Homebridge camera export to Apple Home
+- Companion App occupancy tracking with Home/Away Eufy guard-mode automation
+- Native Home Assistant control of Bedroom and Game Room Apple TVs
 - Automated Compose repository validation through GitHub Actions
 - Reusable diagnostics for Docker health, Compose projects, networks, Watchtower, and qBittorrent/Gluetun
 
@@ -91,6 +95,17 @@ Each Docker stack lives under `docker/<stack-name>/` with:
 Real `.env` files and credentials are excluded from Git.
 
 ## Recent Infrastructure Work
+
+### Home Presence, Eufy Automation, and Apple TV - 2026-07-14
+
+- Connected the Home Assistant Companion App and validated GPS, Wi-Fi, battery, and connection sensors.
+- Corrected the Home zone and confirmed the iPhone device tracker and person entity report occupancy accurately.
+- Created arrival and five-minute delayed departure automations.
+- Refactored Eufy mode changes into reusable Home and Away scripts for the Bedroom and Living Room cameras.
+- Verified Home Assistant mode changes are reflected in the Eufy app.
+- Paired Bedroom and Game Room Apple TVs after isolating a `pyatv` authentication problem.
+- Confirmed play/pause control and media-state updates from Home Assistant.
+- Tightened Apple TV AirPlay access to devices on the same network and confirmed control remained functional.
 
 ### Home Assistant and Eufy Camera Evaluation - 2026-07-13
 
@@ -138,7 +153,7 @@ Real `.env` files and credentials are excluded from Git.
 
 The actively maintained list lives in [`DASHBOARD.md`](DASHBOARD.md).
 
-Current next project: **Home Presence and Security Automation**.
+Current next project: **Home Presence and Security Automation soak testing and manual override design**.
 
 ## Current Learning Goals
 
