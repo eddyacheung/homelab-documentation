@@ -34,6 +34,7 @@ Real `.env` files and secrets must never be committed.
 | [recyclarr](recyclarr/) | TRaSH profile synchronization | No UI | `media-net` | [Recyclarr](../services/recyclarr.md) |
 | [seerr](seerr/) | Media request management | `http://NAS-IP:5055` | `media-net` | [Seerr stack](seerr/README.md) |
 | [sonarr](sonarr/) | TV automation | `http://NAS-IP:8989` | `media-net` | [Sonarr stack](sonarr/README.md) |
+| [teslamate](teslamate/) | Private Tesla vehicle analytics | `http://NAS-IP:4000`, Grafana on `3003` | `teslamate-app`, internal `teslamate-database` | [TeslaMate stack](teslamate/README.md) |
 | [unbound](unbound/) | Recursive DNS resolver | Internal DNS | `media-net` | [Unbound](../networking/unbound.md) |
 | [unpackerr](unpackerr/) | Archive extraction for Radarr and Sonarr | No UI | `media-net` | [Unpackerr stack](unpackerr/README.md) |
 | [uptime-kuma](uptime-kuma/) | Availability monitoring | `http://NAS-IP:3001` | `media-net` | [Uptime Kuma](../services/uptime-kuma.md) |
