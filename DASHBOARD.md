@@ -8,28 +8,44 @@ This file is the quick-glance source of truth for active homelab work. Update it
 
 ### 1. Home Presence and Security Automation
 
-**Status:** Planned, next up
+**Status:** Implemented, soak testing
 
 Goal: Use Home Assistant as the source of truth for occupancy and automatically apply the desired Eufy security behavior without sacrificing fast Apple Home live viewing.
 
-Desired behavior:
+Completed:
 
-- Keep the Eufy Indoor Cam E30 cameras online while home.
-- Disable recording, notifications, and alarms while home.
-- Preserve immediate Apple Home live viewing for checking the dogs.
-- Enable recording, motion/person detection, and notifications when away.
-- Remove the need to open the Eufy app for routine Home/Away changes.
+- Connected and configured the Home Assistant Companion App on the iPhone.
+- Enabled Always and Precise location access, Local Network access, background updates, and notifications.
+- Validated GPS, Wi-Fi, connection, battery, and charging sensors.
+- Corrected the Home zone and set a 100-meter radius.
+- Confirmed the iPhone device tracker and person entity transition correctly between Home and Away.
+- Confirmed the Eufy Security integration exposes Home and Away guard-mode controls.
+- Created `Eufy - Set Home Mode` and `Eufy - Set Away Mode` scripts.
+- Created `Presence - Arrived Home` and `Presence - Left Home` automations.
+- Added a five-minute confirmed-away delay before running the Away script.
+- Verified script-driven mode changes for the Bedroom and Living Room cameras.
+- Verified Home Assistant changes are reflected in the Eufy app.
+- Retained Homebridge for fast Apple Home live camera viewing.
 
-Planned work:
+Current behavior:
 
-- Validate Home Assistant phone presence and home-zone behavior.
-- Define an explicit Home/Away helper or household occupancy state.
-- Confirm which Eufy security-mode controls are exposed to Home Assistant.
-- Build arrival and departure automations with conservative delays.
-- Add manual override and failure-safe controls.
-- Validate indoor-camera recording and notification behavior in both modes.
-- Preserve Homebridge as the Apple Home camera bridge unless a replacement matches its approximately two-second stream startup.
-- Document implementation, rollback, and troubleshooting.
+- Home: Bedroom and Living Room cameras use Eufy Home guard mode.
+- Away for five minutes: Bedroom and Living Room cameras use Eufy Away guard mode.
+- Temporary Companion App notifications remain enabled during soak testing.
+
+Remaining work:
+
+- Validate several natural arrival and departure cycles.
+- Confirm the exact recording, detection, alarm, and notification settings assigned to Eufy Home and Away modes.
+- Remove temporary notifications after reliable operation is confirmed.
+- Add a manual override or guest-mode helper.
+- Investigate true Privacy Mode only if it can coexist with the desired Apple Home live-view behavior.
+- Consider UniFi-assisted presence only if Companion App tracking proves unreliable.
+
+Documentation:
+
+- `services/home-assistant-presence-security.md`
+- `services/home-assistant-eufy-cameras.md`
 
 ## Near-Term Queue
 
@@ -130,6 +146,15 @@ Planned work:
 
 ## Completed Projects
 
+- [x] Home Assistant Apple TV integration
+  - Paired Bedroom Apple TV 4K (2nd generation)
+  - Paired Game Room Apple TV 4K (3rd generation)
+  - Diagnosed `pyatv` AirPlay and Companion authentication failures
+  - Confirmed discovery, network reachability, and advertised protocols from inside the Home Assistant container
+  - Worked around the Python 3.14 `atvremote` event-loop issue for diagnostics
+  - Verified play/pause and media-state control from Home Assistant and the Companion App
+  - Tightened AirPlay access to anyone on the same network after pairing and revalidated control
+  - See `services/home-assistant-apple-tv.md`
 - [x] Home Assistant with Apple Home camera integration evaluation
   - Deployed and validated Home Assistant Container with host networking
   - Integrated Eufy cameras through `eufy-security-ws`
@@ -182,6 +207,9 @@ Planned work:
 
 ## Maintenance and Follow-Up
 
+- [ ] Soak test Home/Away presence automation over several natural departures and arrivals.
+- [ ] Remove temporary presence notifications after reliability is confirmed.
+- [ ] Add a Home Assistant manual override or guest-mode helper for Eufy guard-mode automation.
 - [ ] Restore or confirm the Homebridge Eufy plugin after the Home Assistant HomeKit comparison.
 - [ ] Remove obsolete Home Assistant camera accessories from Apple Home and disable/delete their accessory-mode HomeKit entries.
 - [ ] Confirm Home Assistant WebRTC dashboard streams remain functional after Apple Home cleanup.
