@@ -1,0 +1,123 @@
+services:
+  teslamate:
+    image: teslamate/teslamate:4.0.1
+    container_name: teslamate
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    environment:
+      TZ: ${TZ}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      DATABASE_USER: teslamate
+      DATABASE_PASS: ${DATABASE_PASSWORD}
+      DATABASE_NAME: teslamate
+      DATABASE_HOST: database
+      MQTT_HOST: mosquitto
+    ports:
+      - "4000:4000"
+    volumes:
+      - teslamate-import:/opt/app/import
+    networks:
+      - teslamate-app
+      - teslamate-database
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+  database:
+    image: postgres:18-trixie
+    container_name: teslamate-database
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      POSTGRES_USER: teslamate
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: teslamate
+    volumes:
+      - teslamate-database:/var/lib/postgresql
+    networks:
+      - teslamate-database
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U teslamate -d teslamate
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+  grafana:
+    image: teslamate/grafana:4.0.1
+    container_name: teslamate-grafana
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ}
+      DATABASE_USER: teslamate
+      DATABASE_PASS: ${DATABASE_PASSWORD}
+      DATABASE_NAME: teslamate
+      DATABASE_HOST: database
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SECURITY_DISABLE_GRAVATAR: "true"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    ports:
+      - "3003:3000"
+    volumes:
+      - teslamate-grafana:/var/lib/grafana
+    networks:
+      - teslamate-app
+      - teslamate-database
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: teslamate-mosquitto
+    restart: unless-stopped
+    command: mosquitto -c /mosquitto-no-auth.conf
+    volumes:
+      - teslamate-mosquitto-config:/mosquitto/config
+      - teslamate-mosquitto-data:/mosquitto/data
+    networks:
+      - teslamate-app
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+networks:
+  teslamate-app:
+    name: teslamate-app
+  teslamate-database:
+    name: teslamate-database
+    internal: true
+
+volumes:
+  teslamate-database:
+    name: teslamate-database
+  teslamate-grafana:
+    name: teslamate-grafana
+  teslamate-import:
+    name: teslamate-import
+  teslamate-mosquitto-config:
+    name: teslamate-mosquitto-config
+  teslamate-mosquitto-data:
+    name: teslamate-mosquitto-data
