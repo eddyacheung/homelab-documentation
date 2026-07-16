@@ -1,6 +1,6 @@
 # Homelab Project Dashboard
 
-> Last updated: 2026-07-14
+> Last updated: 2026-07-16
 
 This file is the quick-glance source of truth for active homelab work. Update it whenever a project starts, changes priority, becomes blocked, or is completed.
 
@@ -49,31 +49,21 @@ Documentation:
 
 ## Near-Term Queue
 
-### 2. TeslaMate self-hosted vehicle analytics
+### 2. Home Assistant Tesla dashboard
 
 **Status:** Planned
 
-Goal: Deploy TeslaMate for private, self-hosted Tesla charging, efficiency, and driving-history analytics while minimizing vehicle-control and location-data exposure.
-
-Security requirements:
-
-- Keep TeslaMate and Grafana accessible only from the LAN or through Tailscale.
-- Do not publish TeslaMate through a public Cloudflare hostname.
-- Use a dedicated Docker network rather than attaching the stack to `media-net`.
-- Keep Tesla tokens, database credentials, and the TeslaMate encryption key outside Git.
-- Do not install a Tesla virtual key unless a later requirement clearly justifies vehicle-command access.
-- Encrypt PostgreSQL backups and limit retention because the database contains detailed location history.
-- Avoid unattended PostgreSQL major-version upgrades and document the backup, upgrade, validation, and rollback process.
+Goal: Add useful read-only TeslaMate telemetry to Home Assistant without introducing unnecessary vehicle-command access or weakening MQTT security.
 
 Planned work:
 
-- Confirm the currently supported TeslaMate authentication method for a personal Tesla account.
-- Design a Portainer stack for TeslaMate, PostgreSQL, Grafana, and any required MQTT components.
-- Restrict published ports and verify that PostgreSQL and MQTT are not exposed unnecessarily.
-- Deploy with unique generated secrets and sanitized `.env.example` documentation.
-- Validate charging-session history, energy-added data, vehicle sleep behavior, and dashboard access.
-- Add Home Assistant integration only for useful read-only sensors after the base deployment is stable.
-- Document token revocation, backup recovery, upgrades, and complete removal.
+- Decide how Home Assistant will securely reach the TeslaMate MQTT broker.
+- Avoid exposing the current unauthenticated Mosquitto listener broadly to the LAN.
+- Add useful read-only vehicle, battery, charging, temperature, odometer, and geofence entities.
+- Build a compact Tesla dashboard for desktop and mobile use.
+- Review location privacy before exposing geofence or position data to shared dashboards.
+- Validate entity availability during driving, charging, sleeping, and offline states.
+- Document the final MQTT and Home Assistant configuration.
 
 ### 3. Homelab PowerShell Toolkit
 
@@ -146,6 +136,19 @@ Planned work:
 
 ## Completed Projects
 
+- [x] TeslaMate self-hosted vehicle analytics
+  - Deployed as the Portainer stack `teslamate`
+  - Runs TeslaMate and matching Grafana images at version `4.0.1`
+  - Uses PostgreSQL, Grafana, and an internal Mosquitto broker
+  - Keeps PostgreSQL and MQTT off host-published ports
+  - Uses dedicated `teslamate-app` and internal `teslamate-database` networks
+  - Resolved Tesla Fleet API `403 Forbidden` vehicle-discovery failures by upgrading from `3.1.0` to `4.0.1`
+  - Corrected Grafana network attachment
+  - Removed `cap_drop: ALL` from Mosquitto after privilege errors
+  - Validated OAuth authentication, vehicle discovery, the first drive, and the first charging session
+  - Configured the Home geofence with an effective electricity rate of `$0.13/kWh`
+  - Kept the service LAN/Tailscale-only and excluded all four containers from unattended Watchtower updates
+  - See `docker/teslamate/README.md` and `services/teslamate.md`
 - [x] Home Assistant Apple TV integration
   - Paired Bedroom Apple TV 4K (2nd generation)
   - Paired Game Room Apple TV 4K (3rd generation)
@@ -207,6 +210,9 @@ Planned work:
 
 ## Maintenance and Follow-Up
 
+- [ ] Build and validate the Home Assistant Tesla dashboard.
+- [ ] Design secure Home Assistant access to TeslaMate MQTT without exposing an unauthenticated broker broadly.
+- [ ] Create and validate an encrypted TeslaMate PostgreSQL backup and recovery procedure.
 - [ ] Soak test Home/Away presence automation over several natural departures and arrivals.
 - [ ] Remove temporary presence notifications after reliability is confirmed.
 - [ ] Add a Home Assistant manual override or guest-mode helper for Eufy guard-mode automation.
