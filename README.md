@@ -9,6 +9,7 @@ Documentation and version-controlled infrastructure definitions for my homelab, 
 - [`diagnostics/README.md`](diagnostics/README.md) - reusable, read-only troubleshooting reports
 - [`architecture/homelab-dependency-map.md`](architecture/homelab-dependency-map.md) - visual service, networking, and operations map
 - [`ai/open-webui-homelab-context.md`](ai/open-webui-homelab-context.md) - safe plan for using this repository as Open WebUI knowledge
+- [`services/home-assistant-tesla-dashboard.md`](services/home-assistant-tesla-dashboard.md) - TeslaMate telemetry dashboard, ApexCharts, entities, validation, and rollback
 - [`services/home-assistant-eufy-cameras.md`](services/home-assistant-eufy-cameras.md) - Eufy camera integration, HomeKit evaluation, and architecture decision
 - [`services/home-assistant-presence-security.md`](services/home-assistant-presence-security.md) - Companion App presence, Home/Away automations, and reusable Eufy scripts
 - [`services/home-assistant-apple-tv.md`](services/home-assistant-apple-tv.md) - Apple TV discovery, pairing diagnostics, security settings, and validation
@@ -61,6 +62,7 @@ changes/          Dated infrastructure change notes
 - Home Assistant
 - go2rtc
 - eufy-security-ws
+- TeslaMate
 
 ## Current Infrastructure
 
@@ -75,6 +77,8 @@ changes/          Dated infrastructure change notes
 - Homebridge camera export to Apple Home
 - Companion App occupancy tracking with Home/Away Eufy guard-mode automation
 - Native Home Assistant control of Bedroom and Game Room Apple TVs
+- TeslaMate self-hosted vehicle analytics
+- Home Assistant Voyager dashboard using TeslaMate MQTT telemetry and ApexCharts
 - Automated Compose repository validation through GitHub Actions
 - Reusable diagnostics for Docker health, Compose projects, networks, Watchtower, and qBittorrent/Gluetun
 
@@ -95,6 +99,16 @@ Each Docker stack lives under `docker/<stack-name>/` with:
 Real `.env` files and credentials are excluded from Git.
 
 ## Recent Infrastructure Work
+
+### Home Assistant Tesla Dashboard - 2026-07-17
+
+- Built the Voyager three-column Tesla dashboard from TeslaMate MQTT telemetry.
+- Added vehicle, battery, charging, climate, security, opening, location, odometer, and tire-pressure cards.
+- Installed ApexCharts Card and replaced the stock battery-history graph with a blue 24-hour area chart.
+- Added conditional charging metrics for plugged-in and unplugged states.
+- Corrected range units, hero-image clipping, and YAML rollback procedures.
+- Selected the last aligned dashboard as the Version 1 baseline after rejecting a sparse deduplicated experiment.
+- Documented entities, validation, backup, recovery, and future Version 2 ideas.
 
 ### Home Presence, Eufy Automation, and Apple TV - 2026-07-14
 
