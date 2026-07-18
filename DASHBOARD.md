@@ -1,6 +1,6 @@
 # Homelab Project Dashboard
 
-> Last updated: 2026-07-16
+> Last updated: 2026-07-17
 
 This file is the quick-glance source of truth for active homelab work. Update it whenever a project starts, changes priority, becomes blocked, or is completed.
 
@@ -49,23 +49,7 @@ Documentation:
 
 ## Near-Term Queue
 
-### 2. Home Assistant Tesla dashboard
-
-**Status:** Planned
-
-Goal: Add useful read-only TeslaMate telemetry to Home Assistant without introducing unnecessary vehicle-command access or weakening MQTT security.
-
-Planned work:
-
-- Decide how Home Assistant will securely reach the TeslaMate MQTT broker.
-- Avoid exposing the current unauthenticated Mosquitto listener broadly to the LAN.
-- Add useful read-only vehicle, battery, charging, temperature, odometer, and geofence entities.
-- Build a compact Tesla dashboard for desktop and mobile use.
-- Review location privacy before exposing geofence or position data to shared dashboards.
-- Validate entity availability during driving, charging, sleeping, and offline states.
-- Document the final MQTT and Home Assistant configuration.
-
-### 3. Homelab PowerShell Toolkit
+### 2. Homelab PowerShell Toolkit
 
 **Status:** Planned
 
@@ -87,7 +71,7 @@ Planned work:
 - Add `homelab-health`, `homelab-report`, and `homelab-update` helpers.
 - Document installation, aliases, usage, and troubleshooting.
 
-### 4. RAG document library for local AI
+### 3. RAG document library for local AI
 
 **Status:** Planned, groundwork documented
 
@@ -97,7 +81,7 @@ Planned work:
 - Test answers against known service and troubleshooting notes.
 - Prevent secrets and sensitive configuration from entering the knowledge base.
 
-### 5. SearXNG integration with Open WebUI
+### 4. SearXNG integration with Open WebUI
 
 **Status:** Planned
 
@@ -106,7 +90,7 @@ Planned work:
 - Tune search engines, networking, and privacy settings.
 - Document validation and recovery procedures.
 
-### 6. Plex remote-access design
+### 5. Plex remote-access design
 
 **Status:** Planned
 
@@ -114,7 +98,7 @@ Planned work:
 - Preserve convenient access for shared Plex users.
 - Document security and availability tradeoffs.
 
-### 7. Ansible automation lab
+### 6. Ansible automation lab
 
 **Status:** Planned, second to last
 
@@ -126,7 +110,7 @@ Planned work:
 - Build and validate initial Linux and Docker playbooks.
 - Document the complete control-node and managed-host workflow.
 
-### 8. MAAS deployment lab
+### 7. MAAS deployment lab
 
 **Status:** Planned, last
 
@@ -136,6 +120,16 @@ Planned work:
 
 ## Completed Projects
 
+- [x] Home Assistant Tesla dashboard
+  - Built the three-column Voyager dashboard using TeslaMate MQTT telemetry
+  - Added vehicle, battery, charging, temperature, odometer, location, opening, lock, Sentry, and tire-pressure cards
+  - Replaced the stock history graph with a blue ApexCharts battery-history card
+  - Added conditional plugged-in and unplugged charging metrics
+  - Corrected range units, dashboard spacing, and hero-image clipping
+  - Confirmed the raw vehicle state reports `offline` and avoided relabeling it as sleeping without evidence
+  - Selected the last aligned dashboard as the Version 1 rollback baseline
+  - Documented rejected experiments, validation, backups, and recovery
+  - See `services/home-assistant-tesla-dashboard.md` and `changes/2026-07-17-home-assistant-tesla-dashboard.md`
 - [x] TeslaMate self-hosted vehicle analytics
   - Deployed as the Portainer stack `teslamate`
   - Runs TeslaMate and matching Grafana images at version `4.0.1`
@@ -210,7 +204,8 @@ Planned work:
 
 ## Maintenance and Follow-Up
 
-- [ ] Build and validate the Home Assistant Tesla dashboard.
+- [ ] Validate the Home Assistant Tesla plugged-in conditional cards during a real charging session.
+- [ ] Preserve the aligned Tesla dashboard as the Version 1 rollback baseline before a Version 2 redesign.
 - [ ] Design secure Home Assistant access to TeslaMate MQTT without exposing an unauthenticated broker broadly.
 - [ ] Create and validate an encrypted TeslaMate PostgreSQL backup and recovery procedure.
 - [ ] Soak test Home/Away presence automation over several natural departures and arrivals.
