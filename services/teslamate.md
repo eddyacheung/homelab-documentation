@@ -53,6 +53,10 @@ Do not use `cap_drop: ALL` on the Mosquitto container. The image entrypoint need
 
 A healthy Mosquitto log shows a TeslaMate MQTT client connection.
 
+Home Assistant now consumes TeslaMate-derived MQTT telemetry for the Voyager dashboard. The dashboard integration remains read-only and does not add Tesla command access. The current Home Assistant deployment uses host networking and reaches its configured MQTT endpoint locally.
+
+The MQTT security design still needs a dedicated review because the current listener does not use authentication. Do not expose an unauthenticated listener broadly to the LAN or internet.
+
 ## Upgrade history
 
 The initial TeslaMate `3.1.0` deployment returned a Tesla Fleet API `403 Forbidden` response while requesting vehicles. TeslaMate and its matching Grafana image were upgraded together to `4.0.1`, which restored vehicle discovery.
@@ -78,22 +82,35 @@ The deployment was validated with:
 - The first recorded drive
 - The first recorded charging session
 - The Home geofence and home electricity rate
+- Home Assistant vehicle, battery, charging, temperature, location, odometer, opening, and tire-pressure entities
+- The Home Assistant Voyager dashboard and blue ApexCharts battery-history card
 
-## Home Assistant integration plan
+## Home Assistant integration
 
-The next phase is a Home Assistant Tesla dashboard using useful read-only TeslaMate MQTT entities. The integration should prioritize status and historical context without adding vehicle-command access.
+The read-only Home Assistant dashboard is implemented and documented in `services/home-assistant-tesla-dashboard.md`.
 
-Candidate entities include:
+The dashboard currently includes:
 
 - Vehicle state and connectivity
 - Battery level and estimated range
-- Charging state, power, energy added, and time remaining
+- Charging state, power, energy added, current, voltage, and time remaining
 - Plugged-in status
 - Odometer
 - Inside and outside temperature
-- Location or geofence state, with privacy considered before exposing it to other dashboards
+- Location or geofence state
+- Lock, Sentry, climate, door, window, frunk, and trunk states
+- Four tire-pressure values and warning entities
+- Twenty-four-hour battery history through ApexCharts
 
-MQTT must be made reachable to Home Assistant before entities can be consumed. The current Mosquitto broker is intentionally internal to `teslamate-app` and does not publish a host port. Any change should preserve authentication and avoid exposing an unauthenticated broker to the LAN.
+The dashboard is stored at:
+
+```text
+/volume1/docker/homeassistant/config/dashboards/tesla.yaml
+```
+
+The selected Version 1 baseline is the last aligned layout. A later deduplicated experiment was rejected because it removed too much glanceable information and made the dashboard feel sparse.
+
+Location privacy should be reviewed before exposing the Tesla dashboard to other users or shared displays.
 
 ## Verification
 
@@ -112,6 +129,14 @@ Expected results:
 - Mosquitto logs show a TeslaMate client connection.
 - TeslaMate returns an HTTP response on port `4000`.
 - Grafana normally returns an HTTP `302` redirect to `/login` on port `3003`.
+
+For the Home Assistant dashboard:
+
+- Confirm the Voyager dashboard loads without YAML or card errors.
+- Confirm `sensor.tesla_state` reports its raw state.
+- Confirm battery, range, odometer, temperatures, and tire pressures are numeric.
+- Confirm ApexCharts displays the current battery percentage and history.
+- Validate the plugged-in conditional grid during a real charging session.
 
 ## Backup and recovery
 
@@ -133,6 +158,13 @@ Encrypt the resulting dump before storing it outside the NAS. Validate that the 
 
 Recovery should be tested in an isolated database before replacing the production volume.
 
+Before changing the Home Assistant dashboard, create a timestamped backup:
+
+```bash
+cp /volume1/docker/homeassistant/config/dashboards/tesla.yaml \
+  /volume1/docker/homeassistant/config/dashboards/tesla-backup-$(date +%Y%m%d-%H%M%S).yaml
+```
+
 ## Security boundaries
 
 - Keep TeslaMate and Grafana available only on the LAN or through Tailscale.
@@ -141,6 +173,7 @@ Recovery should be tested in an isolated database before replacing the productio
 - Never commit real passwords, Tesla tokens, or the encryption key.
 - Do not install a Tesla virtual key unless a later requirement explicitly needs command access.
 - Keep all TeslaMate containers excluded from unattended Watchtower updates.
+- Treat vehicle location entities and dashboard access as sensitive information.
 
 ## Known issues and lessons
 
@@ -149,3 +182,6 @@ Recovery should be tested in an isolated database before replacing the productio
 - Mosquitto fails during its ownership and privilege-drop sequence when `cap_drop: ALL` is applied.
 - `MQTT_HOST` must resolve to the Compose service name `mosquitto`.
 - OAuth tokens should be generated only through a trusted workflow and entered directly into the private TeslaMate interface.
+- Home Assistant Sections layouts are responsive and should not be forced into exact pixel-perfect bottom alignment.
+- ApexCharts requires numeric Y-axis bounds for this dashboard; `min: 0` and `max: 100` are the working values.
+- CSS transform scaling on the hero image caused clipping; fixed-height containment is more reliable.
