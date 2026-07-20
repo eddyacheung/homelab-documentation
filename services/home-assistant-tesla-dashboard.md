@@ -2,59 +2,130 @@
 
 ## Overview
 
-Home Assistant now includes a dedicated read-only Tesla Model Y dashboard named **Voyager**. The dashboard consumes TeslaMate MQTT telemetry and presents vehicle, battery, charging, climate, security, opening, odometer, location, and tire-pressure information in a three-column desktop layout.
+Home Assistant includes a dedicated read-only Tesla Model Y dashboard named **Voyager**. It consumes TeslaMate MQTT telemetry and is designed as a vehicle operations dashboard rather than a replacement for the Tesla mobile app.
 
-The dashboard is intentionally telemetry-focused. It does not add Tesla command access or require a virtual key.
+The Tesla app remains the control surface. Voyager focuses on current health, charging, climate, openings, tire pressure, and historical trends. It does not expose lock, climate, charging, trunk, frunk, or other Tesla command actions.
 
 ## Current architecture
 
 - Home Assistant runs as a Docker container on the UGREEN NAS.
 - Home Assistant uses host networking.
-- The dashboard is stored at `/volume1/docker/homeassistant/config/dashboards/tesla.yaml`.
-- The dashboard path is `/tesla-car/model-y`.
-- The dashboard uses TeslaMate-derived MQTT entities.
-- The hero image is stored at `/volume1/docker/homeassistant/config/www/tesla/model-y-juniper.png` and referenced as `/local/tesla/model-y-juniper.png`.
+- Dashboard YAML: `/volume1/docker/homeassistant/config/dashboards/tesla.yaml`
+- Dashboard path: `/tesla-car/model-y`
+- Telemetry source: TeslaMate MQTT entities
+- Current production hero image: `/volume1/docker/homeassistant/config/www/tesla/model-y-juniper-hero-v5.6.png`
+- Home Assistant image reference: `/local/tesla/model-y-juniper-hero-v5.6.png`
 
 ## Frontend dependencies
 
-The dashboard depends on these HACS frontend components:
+The dashboard currently uses:
 
 - Mushroom Cards
 - Card Mod
-- Auto Entities
-- ApexCharts Card
+- Auto Entities where required by older experiments or other dashboards
+- Home Assistant history graph cards on the Insights page
 
-After installing or upgrading a frontend component, restart Home Assistant when required and perform a browser hard refresh with `Ctrl+F5`.
+After changing frontend resources, restart Home Assistant when required and hard-refresh the browser with `Ctrl+Shift+R`.
 
-## Dashboard layout
+## Current dashboard structure
 
-### Left column: vehicle overview
+Voyager now has two views.
 
-- Voyager title and Home location subtitle
-- Model Y Juniper hero image
-- Quick-status chips for battery, range, lock, location, and Sentry mode
-- Battery summary with remaining range and progress bar
-- Vehicle state, location, rated range, and odometer cards
+### Overview
 
-### Middle column: charging and battery history
+The Overview page answers:
 
-- Dynamic charging summary
-- Unplugged metrics: battery, rated range, charging power, and odometer
-- Plugged-in metrics: charge limit, current, voltage, and time to full
-- Twenty-four-hour battery history using ApexCharts
+- Where is the car?
+- What state is it in?
+- Is it locked and healthy?
+- How much battery and rated range remain?
+- Is it connected or charging?
+- Is anything open?
+- Are climate and tire pressures normal?
 
-### Right column: vehicle systems
+#### Hero
 
-- Cabin and outside temperature
-- Climate and preconditioning state
-- Lock and Sentry mode
-- Doors, windows, frunk, and trunk
-- Four tire-pressure cards with color thresholds
-- Auto Entities tire-warning section when warning entities are active
+The full-width hero is a `picture-elements` card with:
 
-## Current entity set
+- Left-side status stack:
+  - Voyager
+  - Current vehicle state
+  - Location
+  - Battery percentage and rated range
+- Right-side three-quarter Model Y render
+- Full-width centered status-chip row:
+  - Lock
+  - Battery
+  - Rated range
+  - Location
+  - Sentry
+  - Healthy or Attention
 
-The dashboard currently references these primary entities:
+The current chip card uses `grid_options: columns: full` so the health chip remains on the same row at desktop width.
+
+#### Current-status columns
+
+The page uses three normal Home Assistant Sections columns rather than a nested fixed grid.
+
+**Vehicle**
+
+- Vehicle state
+- Location
+- Odometer
+- Sentry
+
+**Openings**
+
+- Doors
+- Windows
+- Frunk
+- Trunk
+
+**Battery & Range**
+
+- Battery percentage
+- Rated range
+- Charge limit
+- Energy added
+
+**Charging**
+
+- Cable status
+- Charge state
+- Charging power
+- Time to full
+
+**Climate & Comfort**
+
+- Cabin temperature
+- Outside temperature
+- Climate state
+- Preconditioning state
+
+**Tire pressure**
+
+- Front left
+- Front right
+- Rear left
+- Rear right
+
+The duplicate Lock tile was removed from the Vehicle section because lock status is already visible in the hero chip row. This leaves each top section with four cards and improves column alignment.
+
+### Insights
+
+The Insights page provides historical information that is less accessible in the Tesla app:
+
+- Seven-day battery history
+- Seven-day rated-range history
+- Seven-day cabin and outside temperature history
+- Battery context
+- Vehicle context
+- Climate context
+- Seven-day tire-pressure comparison
+
+The page intentionally uses equal graph sizes and matching context-card structures to maintain alignment.
+
+## Primary entity set
 
 ```text
 sensor.tesla_state
@@ -67,6 +138,7 @@ sensor.tesla_outside_temperature
 binary_sensor.tesla_locked
 binary_sensor.tesla_sentry_mode
 binary_sensor.tesla_climate
+binary_sensor.tesla_healthy
 binary_sensor.tesla_doors_open
 binary_sensor.tesla_trunk
 binary_sensor.tesla_model_y_tesla_plugged_in
@@ -86,140 +158,152 @@ sensor.tesla_rear_left_tire_pressure
 sensor.tesla_rear_right_tire_pressure
 ```
 
-The confirmed raw vehicle state during this session was:
+## State presentation
+
+The dashboard maps TeslaMate state values into friendlier display text.
+
+Examples:
+
+- `asleep`, `sleeping`, or the observed parked `offline` state display as `Sleeping`
+- `online` or `idle` display as `Parked`
+- `charging` displays as `Charging`
+- Unknown values remain visible rather than being silently hidden
+
+This mapping is presentation-only. It does not change the underlying TeslaMate entity.
+
+## Dynamic health chip
+
+The final hero chip is compact so all six chips fit on one row.
+
+Normal state:
 
 ```text
-sensor.tesla_state = offline
+Healthy
 ```
 
-The dashboard therefore reports `Offline` rather than assuming that the vehicle is sleeping.
+Problem state:
 
-## ApexCharts configuration
+```text
+Attention
+```
 
-The stock Home Assistant `history-graph` card was replaced with `custom:apexcharts-card`.
+The chip evaluates lock, doors, windows, frunk, trunk, and TeslaMate health. A future refinement may hide the health chip during normal operation and show only problem-specific warning chips.
 
-Current design decisions:
+## Key layout lessons
 
-- Twenty-four-hour span
-- Five-minute update interval
-- Ten-minute `last` grouping
-- Blue `#4DA3FF` area series
-- Smooth curve
-- Three-pixel stroke
-- Zero-to-one-hundred percent Y-axis
-- Current battery percentage in the card header
-- Three-hundred-pixel chart height
-- Hidden legend and data labels
+### Sections are responsive
 
-A known failure mode is an ApexCharts card showing `N/A`, `Loading...`, or an incorrect zero-to-six scale. The working configuration requires numeric Y-axis bounds:
+Home Assistant Sections views do not behave like a rigid desktop CSS grid. A nested three-column grid produced precise alignment but compressed every card into narrow tiles. The selected design therefore uses three normal Sections columns with identical card counts and structures.
+
+### Use real asset composition instead of CSS scaling
+
+Repeated attempts to resize the original portrait image with `aspect_ratio`, fixed heights, and `object-fit` caused oversized, clipped, or tiny vehicle renders.
+
+The reliable approach was to create a purpose-built wide hero image with:
+
+- A transparent 1600 by 400 canvas
+- The complete three-quarter car render cropped from its source margins
+- The vehicle positioned toward the right
+- Empty space retained on the left for status elements
+
+### Full-width chip cards must be declared at the grid level
+
+CSS attempts to force Mushroom chips onto one row were ineffective because the card itself occupied only part of the section. The durable fix was:
 
 ```yaml
-yaxis:
-  - min: 0
-    max: 100
-    decimals: 0
+grid_options:
+  columns: full
 ```
 
-Do not use `~0` or `~100` for this card.
+### Avoid over-consolidating cards
 
-## Hero image lessons
+Combining several values into twelve large cards reduced card count but made the dashboard harder to scan. The final design restores one primary metric per tile while retaining the polished hero and aligned section structure.
 
-Using CSS `transform: scale(...)` enlarged the image without enlarging the layout box and caused the lower part of the vehicle to be clipped.
+### Avoid duplicate status unless it improves scanability
 
-The preferred method is:
-
-- Give the picture card a fixed height.
-- Use `object-fit: contain`.
-- Adjust image width and horizontal margin rather than CSS transforms.
-- Keep `overflow: visible` only when required.
-
-The selected aligned baseline uses a fixed-height hero card and avoids transform-based scaling.
-
-## Layout lessons
-
-Home Assistant Sections views are responsive and do not behave like a rigid desktop CSS grid. Attempts to force exact bottom alignment with large spacers, duplicate cards, and aggressive fixed heights created more visual problems than they solved.
-
-The selected baseline is the last aligned version. It keeps the richer information layout and accepts small responsive differences between column bottoms.
-
-A modest amount of duplicated information is intentional:
-
-- Hero chips provide quick glanceability.
-- The battery summary gives a readable overview.
-- Charging metrics provide context while troubleshooting charging.
-- Battery History provides trend context.
-
-An experimental deduplicated version removed too much information and made the dashboard feel sparse. It was rejected and the aligned baseline was restored.
-
-## Backup and rollback
-
-Before replacing the dashboard YAML:
-
-```bash
-cp /volume1/docker/homeassistant/config/dashboards/tesla.yaml \
-  /volume1/docker/homeassistant/config/dashboards/tesla-backup-$(date +%Y%m%d-%H%M%S).yaml
-```
-
-If a replacement breaks the dashboard, restore the newest known-good backup and hard refresh the browser.
-
-To inspect a YAML parse error around a specific line:
-
-```bash
-nl -ba /volume1/docker/homeassistant/config/dashboards/tesla.yaml | sed -n '140,160p'
-```
-
-One failed replacement accidentally contained pasted chat transcript text rather than YAML. Signs included lines such as `image(509).png`, prose instructions, and `Ctrl+W`. Always verify that a downloaded file begins with valid dashboard YAML before replacing the live file.
-
-Useful checks:
-
-```bash
-head -n 8 /volume1/docker/homeassistant/config/dashboards/tesla.yaml
-grep -nE 'Thanks, this screenshot|image\([0-9]+\)\.png|Ctrl\+W' \
-  /volume1/docker/homeassistant/config/dashboards/tesla.yaml
-```
-
-The grep command should return no output.
-
-## Validation workflow
-
-For normal dashboard-only changes:
-
-1. Back up `tesla.yaml`.
-2. Replace or edit the file.
-3. Hard refresh the browser with `Ctrl+F5`.
-4. Restart Home Assistant only if the YAML dashboard does not reload or a frontend resource requires it.
-5. Confirm all three columns load without configuration errors.
-6. Confirm ApexCharts displays a numeric battery state and history.
-7. Confirm the unplugged and plugged-in conditional grids switch correctly.
-
-## Current status
-
-The dashboard is functional and selected as the Version 1 baseline.
-
-Validated during the session:
-
-- Hero image renders without the earlier checkerboard/transparency workflow.
-- Battery percentage and rated range display correctly.
-- `mi` is shown in remaining-range text.
-- Charging summary and dynamic metrics load.
-- ApexCharts displays the battery history in blue.
-- Vehicle state reports the real `offline` state.
-- Climate, lock, Sentry, openings, odometer, location, and tire pressure load.
+Hero chips intentionally repeat a few high-value values such as battery and range. The duplicate Lock tile in the Vehicle section was removed because it did not add enough value to justify the extra row.
 
 ## Rejected experiments
 
-- Transform-based hero-image scaling because it clipped the vehicle.
-- A custom manually edited transparent top-down PNG because transparency was unreliable.
-- Moving Battery History under Vehicle because the charging column became empty.
-- Removing most duplicate battery and range information because the dashboard became sparse.
-- Energy Summary cards because they repeated existing data.
-- Large spacer cards and aggressive bottom-alignment fixes because the Sections layout remained responsive.
-- Treating `offline` as `sleeping` because the raw entity did not prove that state.
+- Four-page and three-page dashboard structures
+- A standalone Controls page for a dashboard intended to remain read-only
+- A nested three-column grid that compressed all cards
+- Oversized portrait picture cards
+- Invalid or ineffective picture-card aspect-ratio adjustments
+- Fixed-height picture-elements cards that clipped the vehicle
+- Top-down image used accidentally as the hero
+- Wide banners made from the wrong source asset
+- Over-consolidated cards that reduced scanability
+- CSS-only Mushroom chip nowrap overrides
+- Large permanent health cards that competed with the status chips
+- Keeping a 24-hour battery graph on Overview when historical data already exists on Insights
+
+## Backup and rollback
+
+Before replacing the dashboard:
+
+```bash
+cp /volume1/docker/homeassistant/config/dashboards/tesla.yaml \
+  /volume1/docker/homeassistant/config/dashboards/tesla.yaml.backup-$(date +%Y%m%d-%H%M%S)
+```
+
+Validate configuration:
+
+```bash
+docker exec homeassistant python -m homeassistant \
+  --script check_config \
+  --config /config
+```
+
+Restart when required:
+
+```bash
+docker restart homeassistant
+```
+
+Then hard-refresh the browser with `Ctrl+Shift+R`.
+
+Confirm the file still contains exactly two views:
+
+```bash
+grep -n "^  - title:" \
+  /volume1/docker/homeassistant/config/dashboards/tesla.yaml
+```
+
+Expected titles:
+
+```text
+Overview
+Insights
+```
+
+## Current status
+
+The current Overview design is accepted as the production baseline.
+
+Validated visually:
+
+- Full vehicle is visible at a useful hero size
+- Hero status stack reads naturally
+- Six hero chips display in one row at desktop width
+- Vehicle, Battery & Range, and Climate & Comfort sections align closely
+- Overview does not contain redundant historical graphs
+- Insights graphs and context cards remain aligned
+- Dashboard remains read-only
+
+## Asset cleanup
+
+Multiple experimental images accumulated while refining the hero. Cleanup is tracked in GitHub issue #5.
+
+Before deleting anything, compare the live asset inventory with every `/local/tesla/` reference in `tesla.yaml`. Keep the current production hero, the original source render if desired, and at least one known-good dashboard rollback file.
 
 ## Future work
 
-- Build an interactive top-down Juniper view only after obtaining a suitable layered asset set.
-- Consider a dedicated Trips page using TeslaMate drive and efficiency data.
-- Consider long-term battery-health or degradation reporting when reliable entities or database queries are defined.
-- Refine tire-pressure thresholds after confirming preferred normal pressure ranges.
-- Validate the plugged-in conditional cards during a real charging session.
-- Preserve the current aligned dashboard as the rollback baseline before any Version 2 redesign.
+- Rebuild the hero as a dedicated responsive two-column layout only if the current picture-elements design becomes difficult to maintain
+- Replace the permanent Healthy chip with warning chips that appear only for actionable conditions
+- Add software-update detection when a reliable entity is available
+- Add vampire-drain analysis
+- Add charging-efficiency and charging-session summaries
+- Add last-drive distance and efficiency context
+- Match any future Insights refinements to the Overview typography and spacing
+- Validate responsive behavior on tablet and phone widths
