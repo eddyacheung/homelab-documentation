@@ -1,6 +1,12 @@
 # Home Assistant Presence and Eufy Security Automation
 
-> Last updated: 2026-07-14
+> Last updated: 2026-07-21
+
+## Status
+
+**Complete and operating normally.**
+
+The Home and Away automations have passed manual validation and natural arrival/departure soak testing. No known reliability issues remain. Manual override or guest mode is retained as an optional future enhancement rather than required completion work.
 
 ## Purpose
 
@@ -110,7 +116,7 @@ Trigger:
 Actions:
 
 - Run `Eufy - Set Home Mode`
-- Send a temporary Companion App notification during soak testing
+- Send a Companion App confirmation notification
 
 ### Presence - Left Home
 
@@ -122,7 +128,7 @@ Trigger:
 Actions:
 
 - Run `Eufy - Set Away Mode`
-- Send a temporary Companion App notification during soak testing
+- Send a Companion App confirmation notification
 
 The five-minute departure delay reduces false arming caused by brief GPS drift.
 
@@ -156,6 +162,8 @@ Completed checks:
 - Arrival and departure automation actions run successfully
 - Home and Away scripts change Eufy guard modes
 - Eufy app reflects changes initiated by Home Assistant
+- Companion App confirmation notifications are delivered
+- Natural arrival and departure cycles completed without known reliability issues
 
 ## Current Operating Model
 
@@ -180,11 +188,10 @@ If automatic mode switching becomes unreliable:
 3. Leave the reusable scripts in place for manual testing.
 4. Review the person and device-tracker histories before re-enabling automations.
 
-## Follow-Up
+## Optional Future Enhancements
 
-- Soak test natural departures and arrivals for several days.
-- Remove temporary notifications after reliable operation is confirmed.
-- Verify the exact recording and notification settings assigned to Eufy Home and Away modes.
-- Add a manual override or guest-mode helper before expanding the workflow.
-- Consider UniFi presence only if Companion App tracking proves unreliable.
+- Add a manual override or guest-mode helper if a real operational need develops.
+- Remove confirmation notifications later if they become noisy.
+- Investigate true Privacy Mode only if it can coexist with the desired Apple Home live-view behavior.
+- Consider UniFi-assisted presence only if Companion App tracking becomes unreliable.
 - Keep Homebridge as the Apple Home camera bridge because it remains faster for live streams.
