@@ -75,7 +75,7 @@ changes/          Dated infrastructure change notes
 - Tailscale remote access
 - Home Assistant camera entities and WebRTC dashboards
 - Homebridge camera export to Apple Home
-- Companion App occupancy tracking with Home/Away Eufy guard-mode automation
+- Companion App occupancy tracking with validated Home/Away Eufy guard-mode automation
 - Native Home Assistant control of Bedroom and Game Room Apple TVs
 - TeslaMate self-hosted vehicle analytics
 - Home Assistant Voyager dashboard using TeslaMate MQTT telemetry and ApexCharts
@@ -99,6 +99,13 @@ Each Docker stack lives under `docker/<stack-name>/` with:
 Real `.env` files and credentials are excluded from Git.
 
 ## Recent Infrastructure Work
+
+### Home Presence and Security Automation Completion - 2026-07-21
+
+- Completed natural arrival and departure soak testing.
+- Confirmed Home and Away scripts, automations, and Companion App notifications operate reliably.
+- Moved the project from active work to completed status.
+- Retained manual override or guest mode as an optional future enhancement.
 
 ### Home Assistant Tesla Dashboard - 2026-07-17
 
@@ -167,7 +174,7 @@ Real `.env` files and credentials are excluded from Git.
 
 The actively maintained list lives in [`DASHBOARD.md`](DASHBOARD.md).
 
-Current next project: **Home Presence and Security Automation soak testing and manual override design**.
+Current next project: **Homelab PowerShell Toolkit**.
 
 ## Current Learning Goals
 
