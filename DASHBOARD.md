@@ -1,55 +1,12 @@
 # Homelab Project Dashboard
 
-> Last updated: 2026-07-17
+> Last updated: 2026-07-21
 
 This file is the quick-glance source of truth for active homelab work. Update it whenever a project starts, changes priority, becomes blocked, or is completed.
 
 ## Current Priority
 
-### 1. Home Presence and Security Automation
-
-**Status:** Implemented, soak testing
-
-Goal: Use Home Assistant as the source of truth for occupancy and automatically apply the desired Eufy security behavior without sacrificing fast Apple Home live viewing.
-
-Completed:
-
-- Connected and configured the Home Assistant Companion App on the iPhone.
-- Enabled Always and Precise location access, Local Network access, background updates, and notifications.
-- Validated GPS, Wi-Fi, connection, battery, and charging sensors.
-- Corrected the Home zone and set a 100-meter radius.
-- Confirmed the iPhone device tracker and person entity transition correctly between Home and Away.
-- Confirmed the Eufy Security integration exposes Home and Away guard-mode controls.
-- Created `Eufy - Set Home Mode` and `Eufy - Set Away Mode` scripts.
-- Created `Presence - Arrived Home` and `Presence - Left Home` automations.
-- Added a five-minute confirmed-away delay before running the Away script.
-- Verified script-driven mode changes for the Bedroom and Living Room cameras.
-- Verified Home Assistant changes are reflected in the Eufy app.
-- Retained Homebridge for fast Apple Home live camera viewing.
-
-Current behavior:
-
-- Home: Bedroom and Living Room cameras use Eufy Home guard mode.
-- Away for five minutes: Bedroom and Living Room cameras use Eufy Away guard mode.
-- Temporary Companion App notifications remain enabled during soak testing.
-
-Remaining work:
-
-- Validate several natural arrival and departure cycles.
-- Confirm the exact recording, detection, alarm, and notification settings assigned to Eufy Home and Away modes.
-- Remove temporary notifications after reliable operation is confirmed.
-- Add a manual override or guest-mode helper.
-- Investigate true Privacy Mode only if it can coexist with the desired Apple Home live-view behavior.
-- Consider UniFi-assisted presence only if Companion App tracking proves unreliable.
-
-Documentation:
-
-- `services/home-assistant-presence-security.md`
-- `services/home-assistant-eufy-cameras.md`
-
-## Near-Term Queue
-
-### 2. Homelab PowerShell Toolkit
+### 1. Homelab PowerShell Toolkit
 
 **Status:** Planned
 
@@ -71,7 +28,9 @@ Planned work:
 - Add `homelab-health`, `homelab-report`, and `homelab-update` helpers.
 - Document installation, aliases, usage, and troubleshooting.
 
-### 3. RAG document library for local AI
+## Near-Term Queue
+
+### 2. RAG document library for local AI
 
 **Status:** Planned, groundwork documented
 
@@ -81,7 +40,7 @@ Planned work:
 - Test answers against known service and troubleshooting notes.
 - Prevent secrets and sensitive configuration from entering the knowledge base.
 
-### 4. SearXNG integration with Open WebUI
+### 3. SearXNG integration with Open WebUI
 
 **Status:** Planned
 
@@ -90,7 +49,7 @@ Planned work:
 - Tune search engines, networking, and privacy settings.
 - Document validation and recovery procedures.
 
-### 5. Plex remote-access design
+### 4. Plex remote-access design
 
 **Status:** Planned
 
@@ -98,7 +57,7 @@ Planned work:
 - Preserve convenient access for shared Plex users.
 - Document security and availability tradeoffs.
 
-### 6. Ansible automation lab
+### 5. Ansible automation lab
 
 **Status:** Planned, second to last
 
@@ -110,7 +69,7 @@ Planned work:
 - Build and validate initial Linux and Docker playbooks.
 - Document the complete control-node and managed-host workflow.
 
-### 7. MAAS deployment lab
+### 6. MAAS deployment lab
 
 **Status:** Planned, last
 
@@ -120,6 +79,17 @@ Planned work:
 
 ## Completed Projects
 
+- [x] Home Presence and Security Automation
+  - Connected and configured the Home Assistant Companion App on the iPhone
+  - Corrected the Home zone and validated the iPhone tracker and person entity
+  - Created reusable Eufy Home and Away scripts
+  - Created arrival and five-minute delayed departure automations
+  - Verified Home and Away actions against the Eufy app
+  - Confirmed Companion App notifications and automation actions operate correctly
+  - Completed natural arrival/departure soak testing with no known reliability issues
+  - Retained Homebridge for fast Apple Home camera live viewing
+  - Manual override or guest mode remains an optional future enhancement
+  - See `services/home-assistant-presence-security.md` and `services/home-assistant-eufy-cameras.md`
 - [x] Home Assistant Tesla dashboard
   - Built the three-column Voyager dashboard using TeslaMate MQTT telemetry
   - Added vehicle, battery, charging, temperature, odometer, location, opening, lock, Sentry, and tire-pressure cards
@@ -208,9 +178,7 @@ Planned work:
 - [ ] Preserve the aligned Tesla dashboard as the Version 1 rollback baseline before a Version 2 redesign.
 - [ ] Design secure Home Assistant access to TeslaMate MQTT without exposing an unauthenticated broker broadly.
 - [ ] Create and validate an encrypted TeslaMate PostgreSQL backup and recovery procedure.
-- [ ] Soak test Home/Away presence automation over several natural departures and arrivals.
-- [ ] Remove temporary presence notifications after reliability is confirmed.
-- [ ] Add a Home Assistant manual override or guest-mode helper for Eufy guard-mode automation.
+- [ ] Add a Home Assistant manual override or guest-mode helper for Eufy guard-mode automation if a real need develops.
 - [ ] Restore or confirm the Homebridge Eufy plugin after the Home Assistant HomeKit comparison.
 - [ ] Remove obsolete Home Assistant camera accessories from Apple Home and disable/delete their accessory-mode HomeKit entries.
 - [ ] Confirm Home Assistant WebRTC dashboard streams remain functional after Apple Home cleanup.
