@@ -1,4 +1,4 @@
-﻿services:
+services:
   watchtower:
     image: containrrr/watchtower:latest
     container_name: watchtower
@@ -24,16 +24,59 @@
       WATCHTOWER_CLEANUP: "true"
       WATCHTOWER_REMOVE_VOLUMES: "false"
 
-      # Schedule (every day at noon)
+      # Schedule: every day at noon
       WATCHTOWER_SCHEDULE: "0 0 12 * * *"
 
-      # Update behavior
+      # Container selection and update behavior
       WATCHTOWER_LABEL_ENABLE: "true"
       WATCHTOWER_INCLUDE_STOPPED: "false"
       WATCHTOWER_INCLUDE_RESTARTING: "true"
 
-      # Rolling restart doesn't work with Gluetun network_mode containers
+      # Disabled because rolling restart does not work correctly
+      # with containers sharing Gluetun's network namespace
       WATCHTOWER_ROLLING_RESTART: "false"
 
       WATCHTOWER_TIMEOUT: "30s"
       WATCHTOWER_LOG_FORMAT: "pretty"
+
+      # Home Assistant notifications
+      WATCHTOWER_NOTIFICATION_TITLE_TAG: "UGREEN"
+      WATCHTOWER_NOTIFICATION_REPORT: "true"
+      WATCHTOWER_NOTIFICATION_URL: "${WATCHTOWER_NOTIFICATION_URL}"
+
+      # Notification contents
+      WATCHTOWER_NOTIFICATION_TEMPLATE: |-
+        {{- if .Report -}}
+          {{- with .Report -}}
+            {{- if (or .Updated .Failed) -}}
+        🐳 Docker Update Report
+
+        {{len .Scanned}} scanned
+        {{len .Updated}} update(s) available or processed
+        {{len .Failed}} failed
+
+              {{- range .Updated}}
+
+        • {{.Name}} ({{.ImageName}})
+          {{.CurrentImageID.ShortID}} → {{.LatestImageID.ShortID}}
+              {{- end}}
+
+              {{- range .Failed}}
+
+        ❌ {{.Name}} ({{.ImageName}})
+        {{.State}}: {{.Error}}
+              {{- end}}
+
+        Manual update reminder:
+
+        cd /volume1/docker/portainer/compose/STACK_NUMBER
+        docker compose -p PROJECT_NAME pull
+        docker compose -p PROJECT_NAME up -d
+
+        Or open the matching stack in Portainer and select:
+        Update the stack → Re-pull image and redeploy
+            {{- end -}}
+          {{- end -}}
+        {{- else -}}
+          {{range .Entries -}}{{.Message}}{{"\n"}}{{- end -}}
+        {{- end -}}
