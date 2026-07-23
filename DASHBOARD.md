@@ -30,17 +30,7 @@ Planned work:
 
 ## Near-Term Queue
 
-### 2. RAG document library for local AI
-
-**Status:** Planned, groundwork documented
-
-- Use `ai/open-webui-homelab-context.md` as the ingestion and evaluation plan.
-- Make the homelab documentation searchable from Open WebUI.
-- Define a reliable ingestion and refresh workflow.
-- Test answers against known service and troubleshooting notes.
-- Prevent secrets and sensitive configuration from entering the knowledge base.
-
-### 3. SearXNG integration with Open WebUI
+### 2. SearXNG integration with Open WebUI
 
 **Status:** Planned
 
@@ -49,7 +39,7 @@ Planned work:
 - Tune search engines, networking, and privacy settings.
 - Document validation and recovery procedures.
 
-### 4. Plex remote-access design
+### 3. Plex remote-access design
 
 **Status:** Planned
 
@@ -57,7 +47,7 @@ Planned work:
 - Preserve convenient access for shared Plex users.
 - Document security and availability tradeoffs.
 
-### 5. Ansible automation lab
+### 4. Ansible automation lab
 
 **Status:** Planned, second to last
 
@@ -69,7 +59,7 @@ Planned work:
 - Build and validate initial Linux and Docker playbooks.
 - Document the complete control-node and managed-host workflow.
 
-### 6. MAAS deployment lab
+### 5. MAAS deployment lab
 
 **Status:** Planned, last
 
@@ -79,6 +69,17 @@ Planned work:
 
 ## Completed Projects
 
+- [x] Open WebUI homelab RAG knowledge system
+  - Exported 77 approved repository files while preserving folder hierarchy
+  - Created the `Eddy Homelab` knowledge collection
+  - Configured `sentence-transformers/all-MiniLM-L6-v2` embeddings
+  - Set chunk size to 1000, overlap to 100, Markdown Header Splitter enabled, Hybrid Search disabled, and Top K to 3
+  - Created the `Homelab Assistant` using General Assistant backed by `llama3.1:8b`
+  - Attached the knowledge collection and enabled the Knowledge Base builtin tool and citations
+  - Diagnosed successful ingestion with no query-time retrieval
+  - Resolved retrieval by changing Function Calling from inherited/default native behavior to `Legacy`
+  - Validated source-backed retrieval with the question `What network does Recyclarr use?` and the expected answer `media-net`
+  - See `ai/open-webui-homelab-context.md` and `changes/2026-07-23-open-webui-rag-completion.md`
 - [x] Automated homelab backup and disaster recovery
   - Reformatted the dedicated 2 TB Seagate USB drive as ext4 and mounted it at `/backup`
   - Added mount-point protection so backups cannot silently fall back to the NAS system disk
@@ -185,6 +186,9 @@ Planned work:
 
 ## Maintenance and Follow-Up
 
+- [ ] Refresh `Eddy Homelab` after material repository changes and run the Recyclarr regression test.
+- [ ] Revalidate Function Calling remains `Legacy` after every Open WebUI upgrade.
+- [ ] Automate changed-file synchronization into Open WebUI after the manual refresh workflow has matured.
 - [ ] Confirm the first unattended homelab backup run completes successfully at 03:00.
 - [ ] Perform a test extraction into `/backup/restore`.
 - [ ] Perform a non-production PostgreSQL restore test when a suitable temporary environment is available.
