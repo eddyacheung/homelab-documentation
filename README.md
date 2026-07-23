@@ -8,6 +8,7 @@ Documentation and version-controlled infrastructure definitions for my homelab, 
 - [`docker/README.md`](docker/README.md) - complete Docker stack index and deployment workflow
 - [`diagnostics/README.md`](diagnostics/README.md) - reusable, read-only troubleshooting reports
 - [`architecture/homelab-dependency-map.md`](architecture/homelab-dependency-map.md) - visual service, networking, and operations map
+- [`services/homelab-backup-and-disaster-recovery.md`](services/homelab-backup-and-disaster-recovery.md) - automated USB backups, protected services, validation, retention, and restore procedures
 - [`ai/open-webui-homelab-context.md`](ai/open-webui-homelab-context.md) - safe plan for using this repository as Open WebUI knowledge
 - [`services/home-assistant-tesla-dashboard.md`](services/home-assistant-tesla-dashboard.md) - TeslaMate telemetry dashboard, ApexCharts, entities, validation, and rollback
 - [`services/home-assistant-eufy-cameras.md`](services/home-assistant-eufy-cameras.md) - Eufy camera integration, HomeKit evaluation, and architecture decision
@@ -19,6 +20,7 @@ Documentation and version-controlled infrastructure definitions for my homelab, 
 - UGREEN DXP4800 Plus with 64 GB RAM
 - Windows desktop with NVIDIA RTX 4070
 - Raspberry Pi 4
+- Dedicated 2 TB Seagate USB backup drive formatted as ext4
 
 ## Repository Structure
 
@@ -79,6 +81,7 @@ changes/          Dated infrastructure change notes
 - Native Home Assistant control of Bedroom and Game Room Apple TVs
 - TeslaMate self-hosted vehicle analytics
 - Home Assistant Voyager dashboard using TeslaMate MQTT telemetry and ApexCharts
+- Nightly validated USB backups with PostgreSQL dumps, checksums, retention, and systemd scheduling
 - Automated Compose repository validation through GitHub Actions
 - Reusable diagnostics for Docker health, Compose projects, networks, Watchtower, and qBittorrent/Gluetun
 
@@ -99,6 +102,17 @@ Each Docker stack lives under `docker/<stack-name>/` with:
 Real `.env` files and credentials are excluded from Git.
 
 ## Recent Infrastructure Work
+
+### Homelab Backup and Disaster Recovery - 2026-07-23
+
+- Reformatted a dedicated 2 TB USB drive as ext4 and mounted it at `/backup`.
+- Implemented separate static, PostgreSQL, stateful-service, and master backup scripts.
+- Added online custom-format dumps for Seerr and TeslaMate with `pg_restore` validation.
+- Added cold archives for nine stateful Docker services with automatic restart protection.
+- Added Zstandard compression, SHA-256 checksums, archive tests, locking, logs, and retention.
+- Scheduled the complete workflow nightly at 03:00 with a systemd timer.
+- Completed a successful end-to-end run in 1 minute 2 seconds with approximately 2.0 GB of initial backup data.
+- Documented architecture, protected data, exclusions, operations, and restore procedures.
 
 ### Home Presence and Security Automation Completion - 2026-07-21
 
