@@ -30,7 +30,20 @@ Planned work:
 
 ## Near-Term Queue
 
-### 2. SearXNG integration with Open WebUI
+### 2. Portainer and Watchtower replacement evaluation
+
+**Status:** Planned
+
+- Evaluate Dockhand as the primary candidate and Dockge as the simpler fallback.
+- Keep GitHub and ordinary Compose files as the source of truth.
+- Test stack import, editing, pull/redeploy, logs, terminal access, update scheduling, rollback, networks, volumes, and health visibility.
+- Run the replacement alongside Portainer during evaluation without allowing both tools to manage the same stack.
+- Migrate low-risk stateless stacks first, followed by dependency-sensitive and stateful services only after backup and rollback validation.
+- Disable Watchtower only after controlled updates work through multiple test cycles.
+- Remove Portainer only after all stacks and recovery procedures are validated.
+- See `projects/portainer-watchtower-replacement-evaluation.md`.
+
+### 3. SearXNG integration with Open WebUI
 
 **Status:** Planned
 
@@ -39,7 +52,7 @@ Planned work:
 - Tune search engines, networking, and privacy settings.
 - Document validation and recovery procedures.
 
-### 3. Plex remote-access design
+### 4. Plex remote-access design
 
 **Status:** Planned
 
@@ -47,7 +60,7 @@ Planned work:
 - Preserve convenient access for shared Plex users.
 - Document security and availability tradeoffs.
 
-### 4. Ansible automation lab
+### 5. Ansible automation lab
 
 **Status:** Planned, second to last
 
@@ -59,7 +72,7 @@ Planned work:
 - Build and validate initial Linux and Docker playbooks.
 - Document the complete control-node and managed-host workflow.
 
-### 5. MAAS deployment lab
+### 6. MAAS deployment lab
 
 **Status:** Planned, last
 
