@@ -1,6 +1,6 @@
 # Homelab Project Dashboard
 
-> Last updated: 2026-07-21
+> Last updated: 2026-07-23
 
 This file is the quick-glance source of truth for active homelab work. Update it whenever a project starts, changes priority, becomes blocked, or is completed.
 
@@ -79,6 +79,17 @@ Planned work:
 
 ## Completed Projects
 
+- [x] Automated homelab backup and disaster recovery
+  - Reformatted the dedicated 2 TB Seagate USB drive as ext4 and mounted it at `/backup`
+  - Added mount-point protection so backups cannot silently fall back to the NAS system disk
+  - Implemented separate static, PostgreSQL, stateful-service, and master backup scripts
+  - Added validated custom-format PostgreSQL dumps for Seerr and TeslaMate
+  - Added cold archives for Home Assistant, Sonarr, Radarr, Prowlarr, qBittorrent, Uptime Kuma, Nginx Proxy Manager, Portainer, and Homarr
+  - Added Zstandard compression, SHA-256 checksums, archive validation, locking, logging, and retention
+  - Confirmed all stateful containers restarted successfully after backup
+  - Completed a successful full backup in 1 minute 2 seconds with approximately 2.0 GB used
+  - Enabled the nightly systemd timer for 03:00 Central
+  - See `services/homelab-backup-and-disaster-recovery.md` and `changes/2026-07-23-homelab-backup-system.md`
 - [x] Home Presence and Security Automation
   - Connected and configured the Home Assistant Companion App on the iPhone
   - Corrected the Home zone and validated the iPhone tracker and person entity
@@ -128,7 +139,7 @@ Planned work:
   - Deployed and validated `go2rtc` and WebRTC Camera
   - Built a Home Assistant camera dashboard and verified live Backyard streaming
   - Exported and paired standalone HomeKit camera accessories
-  - Documented the disable/re-enable method for regenerating HomeKit QR-code notifications
+  - Documented the disable/re-enable method for regenerating missing HomeKit QR-code notifications
   - Compared Apple Home performance against Homebridge
   - Retained Homebridge for Eufy Apple Home streaming because it loaded in approximately two seconds and outperformed the Home Assistant export
   - Retained Home Assistant camera entities for dashboards, detection entities, and future automation
@@ -174,10 +185,14 @@ Planned work:
 
 ## Maintenance and Follow-Up
 
+- [ ] Confirm the first unattended homelab backup run completes successfully at 03:00.
+- [ ] Perform a test extraction into `/backup/restore`.
+- [ ] Perform a non-production PostgreSQL restore test when a suitable temporary environment is available.
+- [ ] Add Home Assistant visibility for backup success, duration, age, and free space.
+- [ ] Decide whether Plex metadata warrants a separate lower-frequency backup.
 - [ ] Validate the Home Assistant Tesla plugged-in conditional cards during a real charging session.
 - [ ] Preserve the aligned Tesla dashboard as the Version 1 rollback baseline before a Version 2 redesign.
 - [ ] Design secure Home Assistant access to TeslaMate MQTT without exposing an unauthenticated broker broadly.
-- [ ] Create and validate an encrypted TeslaMate PostgreSQL backup and recovery procedure.
 - [ ] Add a Home Assistant manual override or guest-mode helper for Eufy guard-mode automation if a real need develops.
 - [ ] Restore or confirm the Homebridge Eufy plugin after the Home Assistant HomeKit comparison.
 - [ ] Remove obsolete Home Assistant camera accessories from Apple Home and disable/delete their accessory-mode HomeKit entries.
@@ -186,7 +201,6 @@ Planned work:
 - [ ] Add Pi-hole/Unbound, Plex, and Cloudflare diagnostic reports as needed.
 - [ ] Validate Unpackerr against the next naturally occurring archived download.
 - [ ] Confirm all service documentation matches the live Portainer stacks.
-- [ ] Review backup coverage for stateful container data.
 - [ ] Add maintenance windows to Uptime Kuma for planned updates.
 - [ ] Periodically verify qBittorrent and Gluetun recovery behavior.
 - [ ] Review Watchtower logs after scheduled runs and confirm only opted-in containers are scanned.
