@@ -1,0 +1,26 @@
+services:
+  actual-budget:
+    image: actualbudget/actual-server:latest
+    container_name: actual-budget
+    restart: unless-stopped
+
+    ports:
+      - "5006:5006"
+
+    volumes:
+      - /volume1/docker/actual-budget/data:/data
+
+    environment:
+      TZ: America/Chicago
+
+    security_opt:
+      - no-new-privileges:true
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - node src/scripts/health-check.js
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
