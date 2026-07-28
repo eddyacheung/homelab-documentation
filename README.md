@@ -8,6 +8,7 @@ Documentation and version-controlled infrastructure definitions for my homelab, 
 - [`docker/README.md`](docker/README.md) - complete Docker stack index and deployment workflow
 - [`diagnostics/README.md`](diagnostics/README.md) - reusable, read-only troubleshooting reports
 - [`architecture/homelab-dependency-map.md`](architecture/homelab-dependency-map.md) - visual service, networking, and operations map
+- [`networking/cloudflare-security-hardening.md`](networking/cloudflare-security-hardening.md) - Cloudflare Access, Bot Fight Mode, managed rules, custom WAF rules, validation, and operational guidance
 - [`services/homelab-backup-and-disaster-recovery.md`](services/homelab-backup-and-disaster-recovery.md) - automated USB backups, protected services, validation, retention, and restore procedures
 - [`ai/open-webui-homelab-context.md`](ai/open-webui-homelab-context.md) - safe plan for using this repository as Open WebUI knowledge
 - [`services/home-assistant-tesla-dashboard.md`](services/home-assistant-tesla-dashboard.md) - TeslaMate telemetry dashboard, ApexCharts, entities, validation, and rollback
@@ -102,6 +103,16 @@ Each Docker stack lives under `docker/<stack-name>/` with:
 Real `.env` files and credentials are excluded from Git.
 
 ## Recent Infrastructure Work
+
+### Cloudflare Security Hardening - 2026-07-27
+
+- Verified Cloudflare Access protection for Actual Budget using Google authentication restricted to the owner's Gmail account.
+- Enabled Bot Fight Mode with JavaScript detections and confirmed a Managed Challenge against an external inventory crawler.
+- Verified the Cloudflare managed ruleset is active.
+- Added custom WAF rules to block common exploit paths and exposed backup-file extensions.
+- Evaluated Free-plan rate limiting and rejected it because the 10-second, block-only controls could disrupt Home Assistant or Seerr.
+- Confirmed Home Assistant remains compatible with the companion app and Seerr remains suitable for future friends and family access.
+- Reviewed HTTP and security analytics and found no recurring pattern requiring additional custom rules.
 
 ### Homelab Backup and Disaster Recovery - 2026-07-23
 
