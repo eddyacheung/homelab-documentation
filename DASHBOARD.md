@@ -1,6 +1,6 @@
 # Homelab Project Dashboard
 
-> Last updated: 2026-07-23
+> Last updated: 2026-07-29
 
 This file is the quick-glance source of truth for active homelab work. Update it whenever a project starts, changes priority, becomes blocked, or is completed.
 
@@ -52,15 +52,7 @@ Planned work:
 - Tune search engines, networking, and privacy settings.
 - Document validation and recovery procedures.
 
-### 4. Plex remote-access design
-
-**Status:** Planned
-
-- Review options that avoid unnecessary public exposure.
-- Preserve convenient access for shared Plex users.
-- Document security and availability tradeoffs.
-
-### 5. Ansible automation lab
+### 4. Ansible automation lab
 
 **Status:** Planned, second to last
 
@@ -72,7 +64,7 @@ Planned work:
 - Build and validate initial Linux and Docker playbooks.
 - Document the complete control-node and managed-host workflow.
 
-### 6. MAAS deployment lab
+### 5. MAAS deployment lab
 
 **Status:** Planned, last
 
@@ -82,6 +74,13 @@ Planned work:
 
 ## Completed Projects
 
+- [x] Plex remote-access security design and audit
+  - Retained direct remote access on TCP 32400 for shared-user compatibility
+  - Set Plex Secure connections to Required
+  - Disabled Plex Relay and debug logging
+  - Reviewed UniFi port forwarding and threat-detection behavior
+  - Enabled Notify and Block for the relevant security protections
+  - Confirmed remote streaming remained functional after hardening
 - [x] Open WebUI homelab RAG knowledge system
   - Exported 77 approved repository files while preserving folder hierarchy
   - Created the `Eddy Homelab` knowledge collection
