@@ -1,0 +1,19 @@
+services:
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:latest
+    container_name: tautulli
+    environment:
+      - PUID=1001
+      - PGID=10
+      - TZ=America/Chicago
+    volumes:
+      - /volume1/docker/tautulli/config:/config
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - media-net
+    restart: unless-stopped
+
+networks:
+  media-net:
+    external: true
