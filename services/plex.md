@@ -2,7 +2,7 @@
 
 ## Overview
 
-Plex Media Server is the central media streaming platform for the homelab. It provides access to movies and television shows managed by Sonarr and Radarr while integrating with Overseerr for media requests and qBittorrent for automated downloads.
+Plex Media Server is the central media streaming platform for the homelab. It provides access to movies and television shows managed by Sonarr and Radarr while integrating with Seerr for media requests and qBittorrent for automated downloads.
 
 The server is configured for an event-driven workflow where Sonarr and Radarr notify Plex immediately after successful imports. This eliminates the need for scheduled library scans and allows new media to appear within seconds.
 
@@ -11,7 +11,7 @@ The server is configured for an event-driven workflow where Sonarr and Radarr no
 ## Architecture
 
 ```text
-Overseerr
+Seerr
     |
     v
 Sonarr / Radarr
@@ -33,6 +33,9 @@ Plex Partial Library Scan
     |
     v
 Media Available to Users
+    |
+    v
+Tautulli monitoring / history
 ```
 
 ---
@@ -114,15 +117,30 @@ Using Sonarr and Radarr notifications is more efficient than scheduled periodic 
 
 ---
 
-## Docker Host Gateway
+## Docker Host Access
 
-Containers on `media-net` should access Plex using the Docker bridge gateway instead of the NAS LAN address.
+Containers cannot reliably use the NAS LAN address `192.168.10.101:32400` to reach the host-networked Plex service on this NAS.
 
-### Correct
+Existing Sonarr/Radarr integrations use the reachable Docker bridge gateway:
 
 ```text
 http://172.26.0.1:32400
 ```
+
+For newly documented stacks where the Compose definition can be controlled, prefer Docker's stable host alias:
+
+```yaml
+extra_hosts:
+  - "host.docker.internal:host-gateway"
+```
+
+Then connect to Plex with:
+
+```text
+http://host.docker.internal:32400
+```
+
+Tautulli uses this method. It avoids pinning the service to a Docker `172.x` gateway that may change if networks are recreated.
 
 ### Avoid
 
@@ -130,7 +148,45 @@ http://172.26.0.1:32400
 http://192.168.10.101:32400
 ```
 
-Although the LAN address is reachable from the NAS itself, containers on `media-net` could not reliably communicate with Plex using the NAS LAN IP. The Docker bridge gateway provides a reliable path from containers to host-networked services.
+A container-level test against the NAS LAN address timed out even though the address worked from other contexts.
+
+---
+
+## Tautulli Integration
+
+Tautulli is deployed on `media-net` and monitors Plex through:
+
+```text
+host.docker.internal:32400
+```
+
+The connection was validated from inside the Tautulli container:
+
+```bash
+docker exec tautulli curl -v --connect-timeout 5 http://host.docker.internal:32400/identity
+```
+
+Expected response:
+
+```text
+HTTP/1.1 200 OK
+```
+
+Tautulli successfully records live playback, Direct Play/transcode state, codecs, bandwidth, users, libraries, recently added media, and historical watch statistics.
+
+---
+
+## LAN Networks
+
+Plex `LAN Networks` is explicitly configured as:
+
+```text
+192.168.10.0/24,192.168.2.0/24
+```
+
+The second subnet was added after an Apple TV at `192.168.2.218` appeared as WAN in Tautulli. Restarting playback after the change caused the stream to be reported correctly as LAN.
+
+This setting is separate from **List of IP addresses and networks that are allowed without auth**. Do not expand unauthenticated access merely to correct LAN/WAN classification.
 
 ---
 
@@ -160,7 +216,13 @@ Check Plex from Sonarr over the Docker bridge gateway:
 docker exec sonarr curl --connect-timeout 5 http://172.26.0.1:32400/identity
 ```
 
-Both commands should return Plex XML containing the server version and machine identifier.
+Check Plex from Tautulli over the stable Docker host alias:
+
+```bash
+docker exec tautulli curl --connect-timeout 5 http://host.docker.internal:32400/identity
+```
+
+These commands should return Plex XML containing the server version and machine identifier.
 
 ---
 
@@ -217,82 +279,3 @@ docker exec plex grep -i "Permission denied" \
 Playback succeeded after correcting the top-level group and permissions and restarting Plex.
 
 For reusable ownership, mode, path traversal, and Docker bind-mount troubleshooting guidance, see [`../linux/filesystem-permissions.md`](../linux/filesystem-permissions.md).
-
----
-
-## Stack Rename Notes
-
-### Previous State
-
-```text
-Container: plex
-Project:   plexnew
-Stack:     plexnew
-```
-
-### Current State
-
-```text
-Container: plex
-Project:   plex
-Stack:     plex
-```
-
-The cleanup was performed by:
-
-1. Backing up the existing Compose file and Docker inspect output.
-2. Copying the Portainer stack Compose definition.
-3. Deleting the old `plexnew` stack.
-4. Recreating the stack as `plex` in Portainer.
-5. Verifying the Plex container returned healthy and retained its existing configuration.
-
-Because the existing `/config` bind mount was reused, Plex libraries and settings were preserved.
-
----
-
-## Network Cleanup Notes
-
-During Plex troubleshooting, unused Docker bridge networks were audited and removed with `docker network prune`.
-
-Before pruning, active container counts were checked with:
-
-```bash
-docker network inspect $(docker network ls -q) --format '{{.Name}}: {{len .Containers}} containers'
-```
-
-Unused service-specific default networks were removed. Active networks were left in place.
-
-Current important networks include:
-
-- `media-net`
-- `ai-net`
-- `pihole_macvlan`
-- `host`
-- `bridge`
-- `none`
-
----
-
-## Lessons Learned
-
-- Host-networked services are best accessed from Docker containers through the Docker bridge gateway (`172.26.0.1`).
-- Event-driven Plex updates are preferred over scheduled periodic library scans.
-- Standardized lowercase container and stack names make Docker commands and documentation easier to maintain.
-- Plex should remain on `network_mode: host` for best compatibility with local discovery protocols and Plex clients.
-- Renaming a Portainer stack is safest as a backup, delete, recreate, and verify operation.
-- File permissions alone are not enough; Plex must have execute/traverse access to every parent directory in the media path.
-- `docker exec` tests should use the application's real UID and GID when diagnosing permissions.
-
----
-
-## Related Services
-
-- Sonarr
-- Radarr
-- Overseerr / Seerr
-- qBittorrent
-- Gluetun
-- Prowlarr
-- Nginx Proxy Manager
-- Docker Networking
-- [Linux Filesystem Permissions](../linux/filesystem-permissions.md)
