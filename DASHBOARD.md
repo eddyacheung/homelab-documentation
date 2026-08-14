@@ -1,6 +1,6 @@
 # Homelab Project Dashboard
 
-> Last updated: 2026-07-29
+> Last updated: 2026-08-13
 
 This file is the quick-glance source of truth for active homelab work. Update it whenever a project starts, changes priority, becomes blocked, or is completed.
 
@@ -74,6 +74,17 @@ Planned work:
 
 ## Completed Projects
 
+- [x] RATGDO local garage-door integration
+  - Added Gelidus Research RATGDO AC USB-C v2 to the existing Chamberlain/LiftMaster Security+ 2.0 opener
+  - Joined the device to the IoT VLAN with reserved IP `192.168.20.50`
+  - Confirmed automatic ESPHome discovery in Home Assistant
+  - Renamed the Home Assistant device to `Garage Door`
+  - Verified live door state, light control, obstruction status, and learned open/close timing
+  - Added the Door cover to the existing Home Assistant HomeKit Bridge
+  - Verified Apple Home open/close control and garage-door status
+  - Verified Siri open, close, and status commands
+  - Retained the existing myQ connection as a separate vendor/fallback path
+  - See `services/home-assistant-ratgdo-garage-door.md`
 - [x] Plex remote-access security design and audit
   - Retained direct remote access on TCP 32400 for shared-user compatibility
   - Set Plex Secure connections to Required

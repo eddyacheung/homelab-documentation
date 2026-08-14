@@ -15,6 +15,7 @@ Documentation and version-controlled infrastructure definitions for my homelab, 
 - [`services/home-assistant-eufy-cameras.md`](services/home-assistant-eufy-cameras.md) - Eufy camera integration, HomeKit evaluation, and architecture decision
 - [`services/home-assistant-presence-security.md`](services/home-assistant-presence-security.md) - Companion App presence, Home/Away automations, and reusable Eufy scripts
 - [`services/home-assistant-apple-tv.md`](services/home-assistant-apple-tv.md) - Apple TV discovery, pairing diagnostics, security settings, and validation
+- [`services/home-assistant-ratgdo-garage-door.md`](services/home-assistant-ratgdo-garage-door.md) - local RATGDO garage-door integration with ESPHome, Home Assistant, HomeKit, and Siri
 
 ## Hardware
 
@@ -80,6 +81,7 @@ changes/          Dated infrastructure change notes
 - Homebridge camera export to Apple Home
 - Companion App occupancy tracking with validated Home/Away Eufy guard-mode automation
 - Native Home Assistant control of Bedroom and Game Room Apple TVs
+- Local RATGDO garage-door control through ESPHome, Home Assistant, HomeKit, and Siri
 - TeslaMate self-hosted vehicle analytics
 - Home Assistant Voyager dashboard using TeslaMate MQTT telemetry and ApexCharts
 - Nightly validated USB backups with PostgreSQL dumps, checksums, retention, and systemd scheduling
@@ -103,6 +105,18 @@ Each Docker stack lives under `docker/<stack-name>/` with:
 Real `.env` files and credentials are excluded from Git.
 
 ## Recent Infrastructure Work
+
+### RATGDO Home Assistant Integration - 2026-08-13
+
+- Integrated a Gelidus Research RATGDO AC USB-C v2 with the existing Chamberlain/LiftMaster Security+ 2.0 opener.
+- Joined the device to the IoT VLAN and reserved `192.168.20.50`.
+- Confirmed automatic ESPHome discovery by Home Assistant.
+- Renamed the device to `Garage Door` and validated door state, light control, obstruction status, and learned travel timing.
+- Added the Door cover to the existing Home Assistant HomeKit Bridge.
+- Verified Apple Home can report garage-door state and issue open/close commands.
+- Verified Siri open, close, and status commands.
+- Retained the existing myQ connection as a separate vendor/fallback path.
+- See `services/home-assistant-ratgdo-garage-door.md`.
 
 ### Cloudflare Security Hardening - 2026-07-27
 
