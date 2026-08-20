@@ -14,6 +14,20 @@ Provides availability monitoring and outage notifications for important homelab 
 - Host access: `host.docker.internal:host-gateway`
 - Watchtower: opted in
 
+## Notifications
+
+Uptime Kuma uses a dedicated Discord webhook named **Uptime Kuma** that posts to:
+
+```text
+#automation-alerts
+```
+
+This replaces the previous use of the general Discord channel. The notification configuration remains assigned to the existing media-stack monitors, so service-down and recovery messages land in the shared automation-alert channel while retaining the Uptime Kuma webhook name/icon.
+
+A separate **Radarr Downsizer** webhook also posts to `#automation-alerts`; the two integrations intentionally use different webhooks so Discord clearly identifies the source of each alert.
+
+Do not commit Discord webhook URLs to this repository.
+
 ## Deploy
 
 ```bash
