@@ -13,6 +13,30 @@ Automates movie monitoring, acquisition, importing, and library organization.
 - Config: `/volume1/docker/radarr/config:/config`
 - Media: `/volume2/Media:/data`
 
+## Automated storage downsizing
+
+A custom autonomous Radarr downsizer runs on the NAS to replace oversized 2160p movies with smaller, efficient 2160p encodes when conservative safety rules are satisfied.
+
+Current production version: **v8.2**.
+
+Key behavior:
+
+- One active replacement at a time.
+- Minimum existing file size: 25 GiB.
+- Minimum savings: 30%.
+- Minimum torrent seeders: 2.
+- 2160p-only replacement candidates.
+- Edition/cut mismatch protection.
+- Safe handling of Radarr's `Existing file meets cutoff` condition.
+- Manual-import finisher for completed downloads that Radarr considers a non-upgrade.
+- Verification before reclaimed storage is counted.
+- Discord reporting to `#automation-alerts` for successful replacements, attention conditions, and errors.
+- Root cron invokes the orchestration wrapper every 30 minutes.
+
+Radarr's application recycle bin is disabled so space from successfully replaced media is reclaimed immediately.
+
+See [downsizer.md](downsizer.md) for the full workflow, safety policy, scheduled command, logs, state files, and notification configuration.
+
 ## Deploy
 
 ```bash
