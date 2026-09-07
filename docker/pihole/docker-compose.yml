@@ -1,14 +1,16 @@
-﻿services:
+services:
   pihole:
     image: pihole/pihole:latest
     container_name: pihole
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "com.centurylinklabs.watchtower.monitor-only=true"
     hostname: pihole
 
     environment:
       TZ: America/Chicago
-      WEBPASSWORD: ${PIHOLE_WEBPASSWORD}
-      FTLCONF_LOCAL_IPV4: 192.168.10.250
-      DNSMASQ_LISTENING: all
+      FTLCONF_webserver_api_password: ''
+      FTLCONF_dns_listeningMode: all
 
     volumes:
       - /volume1/docker/pihole/etc-pihole:/etc/pihole
