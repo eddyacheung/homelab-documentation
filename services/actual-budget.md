@@ -2,35 +2,103 @@
 
 ## Overview
 
-Actual Budget is the homelab's self-hosted budgeting and account-management platform. It is deployed on the UGREEN NAS through Portainer and accessed through Nginx Proxy Manager and Cloudflare Tunnel.
+Actual Budget is the homelab's self-hosted budgeting and account-management platform. It is deployed on the UGREEN NAS through Portainer. Routine remote access is restricted to Tailscale.
 
-This document records the live architecture, the validated Simplifi migration workflow, the opening-balance reconciliation method, and the planned SimpleFIN integration.
+This document records the live architecture, the validated Simplifi migration workflow, SimpleFIN synchronization, and the custom Actual Helpers automations used for investment, debt, and 401(k) loan tracking.
 
 ## Architecture
 
 ```text
-Browser
-  -> https://actual.armouredcore.net
-  -> Cloudflare Tunnel
-  -> nginx-proxy-manager:80
-  -> 192.168.10.101:5006
+Tailscale client
+  -> UGREEN NAS
   -> actual-budget container
   -> /volume1/docker/actual-budget/data
+
+actual-auto-sync
+  -> actual-budget:5006
+  -> daily SimpleFIN import
+
+actual-helpers
+  -> Actual API
+  -> investment, debt, and 401(k) loan tracking
 ```
 
-The direct HTTP endpoint is not suitable for normal browser use because Actual requires HTTPS and cross-origin isolation for `SharedArrayBuffer`.
+The Actual stack is managed through Portainer. Companion containers use the internal Docker network to communicate with Actual where appropriate.
 
 ## Current Status
 
 - Actual server deployed and healthy
-- Public HTTPS hostname operational
-- Nginx Proxy Manager route operational
-- Required cross-origin headers validated through `curl.exe -I`
-- Firefox stale-site-data issue identified and resolved
-- Simplifi transaction export workflow validated
-- Checking-account history imported and reconciled
-- SimpleFIN not yet connected
-- Cloudflare Access remains a security follow-up
+- Actual Budget 26.8.0 validated
+- Routine remote access restricted to Tailscale
+- Simplifi historical migration completed and retained as migration documentation
+- SimpleFIN connected and operational
+- `actual-auto-sync` runs daily at 06:30 Central
+- `actual-helpers` provides investment, debt, and 401(k) loan tracking
+- Investment helper runs daily at 06:45 Central
+- Debt helper runs at 06:45 Central on the 4th of each month
+- 401(k) loan helper runs daily at 07:00 Central
+- Helper scripts include logging and recovery for Actual out-of-sync cache errors
+
+## Automation Schedule
+
+Current host cron entries related to Actual:
+
+```cron
+45 6 * * * /volume1/docker/actual-helpers/scripts/run-track-investments.sh
+45 6 4 * * /volume1/docker/actual-helpers/scripts/run-track-debts.sh
+0 7 * * * /volume1/docker/actual-helpers/scripts/run-track-401k-loan.sh
+```
+
+The SimpleFIN companion container independently runs its daily sync at 06:30 Central. The staggered schedule gives SimpleFIN time to import current transactions before the helper scripts inspect the budget.
+
+## Actual Helpers
+
+The `actual-helpers` container uses scripts stored on the NAS under:
+
+```text
+/volume1/docker/actual-helpers/scripts/
+```
+
+Current helper scripts include:
+
+- `track-investments.js` / `run-track-investments.sh`
+- `track-debts.js` / `run-track-debts.sh`
+- `track-401k-loan.js` / `run-track-401k-loan.sh`
+
+The helpers use a persistent Actual cache under:
+
+```text
+/volume1/docker/actual-budget/helpers-cache
+```
+
+Runner scripts log executions, rotate logs at 5 MB, detect `SyncError: out-of-sync`, move the stale local budget cache aside, and retry once with a fresh cache.
+
+### 401(k) loan tracking
+
+The 401(k) loan is maintained as an off-budget liability named `401k Loan - Tracking`.
+
+Beginning 2026-10-15, `track-401k-loan.js` looks for qualifying payroll deposits in `Checking` with:
+
+- Payee: `RR Donnelley`
+- Category: `Salary`
+
+For each qualifying paycheck, the helper records a `$87.90` positive adjustment in the tracking account using the paycheck's transaction date. The helper uses the source paycheck transaction ID for idempotency so the same paycheck cannot be processed twice.
+
+The automation deliberately follows imported payroll transactions instead of assuming a fixed biweekly calendar. If a paycheck arrives after the 07:00 run, a later run discovers it and records the adjustment using the original paycheck date.
+
+The helper is bind-mounted into the container:
+
+```yaml
+- /volume1/docker/actual-helpers/scripts/track-401k-loan.js:/usr/src/app/track-401k-loan.js:ro
+```
+
+Log:
+
+```text
+/volume1/docker/actual-budget/helpers-cache/track-401k-loan.log
+```
+
+Current balances and transaction history remain intentionally excluded from Git.
 
 ## Simplifi Export Procedure
 
@@ -55,9 +123,11 @@ Never commit any of the following:
 - Actual budget files or databases
 - Account numbers
 - Current balances
-- Payees or transaction history
+- Transaction history
 - SimpleFIN tokens
 - Bank credentials
+
+Configuration values required to reproduce an automation may be documented when they do not expose credentials, account numbers, current balances, or transaction-history dumps.
 
 ## Actual CSV Import Mapping
 
@@ -120,72 +190,46 @@ The checking migration established the repeatable workflow:
 
 Specific transaction details and balances are intentionally excluded from Git.
 
-## Remaining Migration Order
+## Transfers and Off-Budget Liabilities
 
-Recommended sequence:
+Pair corresponding transactions as transfers when both sides are represented by on-budget accounts. A credit-card payment is a transfer, not new spending; the card purchase is the spending event.
 
-1. Remaining checking and savings accounts
-2. HSA
-3. Active credit cards
-4. Store and revolving-credit accounts
-5. Manually tracked liabilities
-6. Investment and retirement accounts
-7. SimpleFIN connection
-8. Transfer repair and categorization rules
-9. Recurring schedules and budget targets
+Off-budget liabilities are different. Payments may be categorized from checking while the off-budget balance is tracked or reconciled separately to account for principal, interest, or payroll deductions.
 
-Inactive zero-balance accounts should be migrated only when their historical data is useful.
+The 401(k) loan automation follows this pattern: the paycheck is the trigger, but the tracking adjustment is not represented as a false transfer out of checking.
 
-## Transfers
+## SimpleFIN Synchronization
 
-Do not finalize categories until both sides of major transfers are present.
+SimpleFIN is connected and operational. Historical accounts were linked to their existing Actual accounts rather than duplicated.
 
-Examples include:
+The `actual-auto-sync` companion container:
 
-- Checking to savings
-- Checking to credit card
-- Checking to loan
-- PayPal or Apple Cash transfers
+- Runs daily at 06:30 Central
+- Uses the internal Docker endpoint `http://actual-budget:5006`
+- Imports the newest data already available from SimpleFIN
+- Does not force financial institutions to refresh upstream data
+- Uses `RUN_ON_START=false` after validation
 
-Once both accounts exist, pair corresponding transactions as transfers where appropriate. A credit-card payment is a transfer, not new spending; the card purchase is the spending event.
+Manual sync remains available when a specific transaction is expected before the next scheduled run.
 
-## SimpleFIN Plan
+## Legacy Browser and Proxy Troubleshooting
 
-Connect SimpleFIN only after historical imports and balance reconciliation are complete.
-
-For each SimpleFIN account:
-
-1. Link it to the existing Actual account that contains imported history.
-2. Do not create a duplicate account.
-3. Sync one account first.
-4. Review the overlapping recent period for duplicate pending and posted transactions.
-5. Confirm the cleared balance and new transaction flow.
-6. Continue account by account.
-
-Use the monthly SimpleFIN plan during the validation period before switching to annual billing.
-
-## Browser and Proxy Troubleshooting
+Actual previously used Nginx Proxy Manager and Cloudflare Tunnel for public HTTPS access. Routine access has since moved to Tailscale, but the following notes are retained for historical troubleshooting.
 
 ### Fatal SharedArrayBuffer error
 
-Verify:
-
-```powershell
-curl.exe -I https://actual.armouredcore.net
-```
-
-Required headers:
+When using an HTTPS reverse proxy, Actual requires:
 
 ```text
 cross-origin-opener-policy: same-origin
 cross-origin-embedder-policy: require-corp
 ```
 
-If they are present and Firefox Private Browsing works, clear normal-profile data for the site. The server and proxy are functioning; stale browser storage is the likely cause.
+If those headers are present and Firefox Private Browsing works, clear normal-profile data for the site. Stale browser storage may be the cause.
 
-### NPM guidance
+### Historical NPM guidance
 
-Keep only:
+The previous NPM configuration kept only:
 
 ```nginx
 client_max_body_size 100M;
@@ -195,13 +239,19 @@ Do not inject duplicate cross-origin headers when the Actual server already supp
 
 ## Backup and Recovery
 
-Persistent data:
+Persistent Actual data:
 
 ```text
 /volume1/docker/actual-budget/data
 ```
 
-This directory must be added to the existing nightly backup policy. Before bulk imports, upgrades, bank-link changes, or encryption changes, create a point-in-time backup.
+Helper cache:
+
+```text
+/volume1/docker/actual-budget/helpers-cache
+```
+
+The persistent Actual data directory must remain in the existing backup policy. Before bulk imports, upgrades, bank-link changes, or encryption changes, create a point-in-time backup.
 
 Restore outline:
 
@@ -209,20 +259,20 @@ Restore outline:
 2. Restore the complete data directory.
 3. Confirm ownership and permissions.
 4. Start the container.
-5. Validate login, budget availability, balances, and sync state.
+5. Validate login, budget availability, balances, SimpleFIN sync, and helper operation.
 
-## Security Follow-ups
+Helper cache data is disposable synchronization state. When an Actual helper encounters an out-of-sync cache, its runner moves the stale budget cache aside and retries once with a fresh cache.
 
-- Add Cloudflare Access authentication to `actual.armouredcore.net`, or move routine remote access to Tailscale only.
-- Enable Actual budget encryption after migration validation.
+## Security Notes
+
+- Routine remote access is restricted to Tailscale.
 - Store encryption and server passwords in the password manager.
-- Confirm SimpleFIN tokens and server files are included in protected backups but never in Git.
-- Review whether port `5006` should remain LAN-published after proxy validation.
+- Keep SimpleFIN tokens and server files in protected storage and never commit them to Git.
+- Do not commit account numbers, current balances, exported transaction history, or Actual database files.
 
 ## Related Files
 
-- [`../docker/actual-budget/docker-compose.yml`](../docker/actual-budget/docker-compose.yml)
-- [`../docker/actual-budget/README.md`](../docker/actual-budget/README.md)
-- [`../networking/cloudflare-zero-trust.md`](../networking/cloudflare-zero-trust.md)
-- [`nginx-proxy-manager.md`](nginx-proxy-manager.md)
+- [`../changes/2026-08-04-actual-budget-auto-sync-and-cloudflare-migrations.md`](../changes/2026-08-04-actual-budget-auto-sync-and-cloudflare-migrations.md)
+- [`../changes/2026-10-03-actual-budget-401k-loan-tracking.md`](../changes/2026-10-03-actual-budget-401k-loan-tracking.md)
+- [`../networking/tailscale.md`](../networking/tailscale.md)
 - [`homelab-backup-and-disaster-recovery.md`](homelab-backup-and-disaster-recovery.md)
