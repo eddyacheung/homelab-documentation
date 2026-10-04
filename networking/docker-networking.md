@@ -291,6 +291,138 @@ http://172.26.0.1:32400
 
 ---
 
+## Docker Default Address Pool
+
+Docker Compose automatically creates a project default bridge network when a stack does not explicitly use an existing network. If Docker is left with its built-in address pools, repeated network creation can eventually allocate a subnet that overlaps a real LAN or VLAN.
+
+On 2026-10-04 this caused a routing failure on the UGREEN NAS:
+
+```text
+Real IoT VLAN:             192.168.20.0/24
+LG C9:                     192.168.20.249
+Accidental Docker network: 192.168.16.0/20
+```
+
+The Docker `/20` covered `192.168.16.0` through `192.168.31.255`, which includes the entire IoT VLAN. Linux therefore treated `192.168.20.249` as locally reachable through the Docker bridge instead of routing it through the UniFi gateway.
+
+Observed broken route:
+
+```text
+192.168.20.249 dev br-46f18cf90822 src 192.168.16.1
+```
+
+The offending network was an automatically created Compose network:
+
+```text
+56_default
+Subnet: 192.168.16.0/20
+```
+
+It had no attached containers when the incident was investigated and disappeared after the associated Compose lifecycle completed.
+
+### Permanent Address-Pool Configuration
+
+Docker is now restricted to a dedicated non-overlapping pool for future automatically allocated bridge networks.
+
+Host configuration:
+
+```text
+/etc/docker/daemon.json
+```
+
+Tracked copy:
+
+```text
+networking/docker-daemon.json
+```
+
+Configuration:
+
+```json
+{
+  "data-root": "/volume1/@docker",
+  "features": {
+    "containerd-snapshotter": false
+  },
+  "default-address-pools": [
+    {
+      "base": "10.200.0.0/16",
+      "size": 24
+    }
+  ]
+}
+```
+
+Meaning:
+
+- `10.200.0.0/16` is reserved for future automatically generated Docker bridge networks.
+- `size: 24` tells Docker to carve the pool into individual `/24` networks.
+- This provides up to 256 `/24` subnets.
+- Existing Docker networks are not migrated by this setting.
+- Existing `172.x` networks and the Pi-hole macvlan remain unchanged.
+- Future Compose default networks should be allocated from `10.200.x.0/24` rather than eventually spilling into `192.168.x.x`.
+
+The configuration was validated before restart:
+
+```bash
+dockerd --validate --config-file=/etc/docker/daemon.json
+```
+
+Expected result:
+
+```text
+configuration OK
+```
+
+A temporary network was then created to verify live allocation:
+
+```bash
+docker network create docker-pool-test
+docker network inspect docker-pool-test --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}'
+```
+
+Observed result:
+
+```text
+10.200.1.0/24
+```
+
+The temporary network was removed after validation.
+
+### Routing Verification
+
+For devices on the IoT VLAN, the NAS must route traffic through the UniFi gateway instead of a local Docker bridge.
+
+Correct route for the LG C9:
+
+```text
+192.168.20.249 via 192.168.10.1 dev eth0 src 192.168.10.101
+```
+
+Useful checks:
+
+```bash
+ip route get 192.168.20.249
+ping -c 4 192.168.20.249
+nc -vz 192.168.20.249 3000
+```
+
+For the LG webOS integration, TCP port `3000` must be reachable from the NAS. This was verified successfully after the conflicting Docker network disappeared.
+
+### Current Physical-Network Ranges to Protect
+
+Docker-created bridge networks must not overlap these real networks:
+
+```text
+Main LAN: 192.168.10.0/24
+IoT VLAN: 192.168.20.0/24
+Pi-hole:  192.168.10.250 on pihole_macvlan
+```
+
+When adding future VLANs, confirm they also do not overlap the reserved Docker pool.
+
+---
+
 ## Network Cleanup
 
 During the Plex auto-scan troubleshooting, unused Docker networks were audited and cleaned up.
