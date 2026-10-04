@@ -1,0 +1,12 @@
+{
+  "data-root": "/volume1/@docker",
+  "features": {
+    "containerd-snapshotter": false
+  },
+  "default-address-pools": [
+    {
+      "base": "10.200.0.0/16",
+      "size": 24
+    }
+  ]
+}
